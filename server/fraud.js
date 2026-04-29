@@ -7,12 +7,13 @@
  * Grade:  A (90-100) | B (75-89) | C (55-74) | D (<55)
  *
  * Signals implemented:
- *  1. Cross-issuer duplicate hash         (-50)
- *  2. Same register number, diff issuers  (-35)
- *  3. Same patient name+DOB, diff issuers (-25)
- *  4. High verification frequency         (-10)
- *  5. Missing critical identity fields    (-5 each, max -15)
- *  6. Billing anomaly vs procedure avg    (-25 critical / -10 moderate)
+ *  1. Cross-issuer duplicate hash              (-50)
+ *  2. Same register number, diff issuers       (-35)
+ *  3. Same patient name+DOB, diff issuers      (-25)
+ *  4. High verification frequency              (-10)
+ *  5. Missing critical identity fields         (-5 each, max -15)
+ *  6. Billing anomaly vs procedure avg         (-25 critical / -10 moderate)
+ *  7. Simultaneous billing collision (same day)(-40)
  */
 
 // ── Billing Baselines (INR) ───────────────────────────────────────────────────
@@ -167,6 +168,43 @@ async function computeRiskScore(record, db) {
                 message: `Claim amount of INR ${claimAmount.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Above expected range.`,
             });
             deduction += 10;
+        }
+    }
+
+    // ── Signal 7: Simultaneous Billing Collision ─────────────────────────────
+    // The most explicit ghost-procedure pattern: the same patient appearing
+    // in records from two DIFFERENT issuers on the EXACT SAME calendar date.
+    // Signals 2 and 3 catch cross-issuer duplicates at any point in time;
+    // this signal specifically catches same-day simultaneous billing —
+    // a strong indicator of a fabricated or cloned claim.
+    if (record.issueDate && record.issuerUsername) {
+        const nameNorm = record.patientName ? record.patientName.trim().toLowerCase() : null;
+        const sameDayOther = allRecords.filter(r =>
+            r.issuerUsername &&
+            r.issuerUsername !== record.issuerUsername &&
+            r.issueDate === record.issueDate &&
+            (
+                // Match by register number (strongest identity anchor)
+                (record.registerNumber && r.registerNumber && r.registerNumber === record.registerNumber) ||
+                // OR match by name + DOB (soft identity anchor)
+                (nameNorm && r.patientName && record.dob &&
+                    r.dob === record.dob &&
+                    r.patientName.trim().toLowerCase() === nameNorm)
+            )
+        );
+        if (sameDayOther.length > 0) {
+            const sameDayLabels = sameDayOther.map(r =>
+                r.issuerProfile?.institution
+                    ? `${r.issuerProfile.institution} (${r.issuerUsername})`
+                    : r.issuerUsername
+            );
+            const uniqueSameDayLabels = [...new Set(sameDayLabels)];
+            flags.push({
+                type: 'SIMULTANEOUS_BILLING_COLLISION',
+                severity: 'critical',
+                message: `Patient "${record.patientName}" was billed by ${uniqueSameDayLabels.length + 1} different providers on ${record.issueDate}: also billed by ${uniqueSameDayLabels.join(', ')}. Strong ghost procedure indicator.`,
+            });
+            deduction += 40;
         }
     }
 
