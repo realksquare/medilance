@@ -146,4 +146,60 @@ router.put('/update-user', async (req, res) => {
     }
 });
 
+// Fetch all records
+router.get('/records', async (req, res) => {
+    try {
+        const adminUser = req.headers['x-admin-user'];
+        if (!adminUser) return res.status(403).json({ error: 'Admin access required' });
+        const db = getDB();
+        const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
+        if (!admin) return res.status(403).json({ error: 'Admin access required' });
+
+        const records = await db.collection('medical_records').find({}).sort({ createdAt: -1 }).toArray();
+        res.json({ records });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete multiple records
+router.post('/records/delete', async (req, res) => {
+    try {
+        const adminUser = req.headers['x-admin-user'];
+        if (!adminUser) return res.status(403).json({ error: 'Admin access required' });
+        const db = getDB();
+        const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
+        if (!admin) return res.status(403).json({ error: 'Admin access required' });
+
+        const { ids } = req.body;
+        if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Array of ids required' });
+        
+        await db.collection('medical_records').deleteMany({ _id: { $in: ids } });
+        res.json({ message: `${ids.length} records deleted` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update master admin details
+router.put('/update-master', async (req, res) => {
+    try {
+        const adminUser = req.headers['x-admin-user'];
+        if (!adminUser) return res.status(403).json({ error: 'Admin access required' });
+        const db = getDB();
+        const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
+        if (!admin) return res.status(403).json({ error: 'Admin access required' });
+
+        const { fullName, institution } = req.body;
+        const updates = {};
+        if (fullName) updates.fullName = fullName;
+        if (institution !== undefined) updates.institution = institution;
+
+        await db.collection('users').updateOne({ username: adminUser }, { $set: updates });
+        res.json({ message: 'Admin details updated successfully', user: { ...admin, ...updates, passwordHash: undefined } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

@@ -39,7 +39,7 @@ function StageRow({ num, title, desc, status }) {
 }
 
 const labelSt = { fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.55, marginBottom: '0.2rem' };
-const valSt   = { fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' };
+const valSt = { fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' };
 
 function VerificationHistoryBanner({ history }) {
   if (!history) return null;
@@ -90,7 +90,7 @@ function RecordGrid({ rec, history }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: '0.2rem' }}>Issued By</p>
             <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>
-              {entityLabel}{uploadedOn ? ` — ${uploadedOn}` : ''}
+              {entityLabel}{uploadedOn ? ` - ${uploadedOn}` : ''}
             </p>
           </div>
         </div>
@@ -137,7 +137,7 @@ export default function VerificationPage() {
   const scannerRef = useRef(null);
 
   useEffect(() => {
-    return () => { try { scannerRef.current?.stop().catch(() => {}); } catch {} };
+    return () => { try { scannerRef.current?.stop().catch(() => { }); } catch { } };
   }, []);
 
   const resetState = () => {
@@ -201,7 +201,7 @@ export default function VerificationPage() {
     try {
       await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 },
         (text) => { setHashInput(extractHash(text)); scanner.stop().then(() => setScanning(false)); },
-        () => {}
+        () => { }
       );
     } catch { setError('Camera access denied or not found.'); setScanning(false); }
   };
@@ -247,14 +247,14 @@ export default function VerificationPage() {
       s1rec = data.record || null;
       s1fraud = data.fraud || null;
       s1history = data.verificationHistory || null;
-    } catch {}
+    } catch { }
 
     setMintStages({ s1: s1pass ? 'pass' : 'fail', s1rec, s1fraud, s1history, s2: 'running', s2rec: null, s2hash: null });
     await sleep(700);
 
     // Stage 2: QR extraction (always run)
     let s2hash = null, s2rec = null, s2status = 'no-qr';
-    try { s2hash = await extractQRFromFile(file); } catch {}
+    try { s2hash = await extractQRFromFile(file); } catch { }
 
     if (s2hash) {
       try {
@@ -269,7 +269,7 @@ export default function VerificationPage() {
       } catch { s2status = 'fail'; }
     }
 
-      setMintStages({ s1: s1pass ? 'pass' : 'fail', s1rec, s1fraud, s1history, s2: s2status, s2rec, s2hash });
+    setMintStages({ s1: s1pass ? 'pass' : 'fail', s1rec, s1fraud, s1history, s2: s2status, s2rec, s2hash });
   };
 
   const handleBulkVerify = async () => {
@@ -336,7 +336,7 @@ export default function VerificationPage() {
     idle: 'Waiting for Stage 1 to complete…',
     running: 'Scanning document for an embedded MediLance QR code…',
     pass: s1passed
-      ? 'QR code also detected — consistent with the Stage 1 result. No further action needed.'
+      ? 'QR code also detected - consistent with the Stage 1 result. No further action needed.'
       : 'QR code detected and links to a valid record. Since the hash check failed, treat this as a reference only.',
     fail: 'A QR code was detected but the hash it encodes is not registered in the system.',
     'no-qr': 'No QR code found in this document.',
@@ -345,7 +345,7 @@ export default function VerificationPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
 
-      {/* Loading overlay — Basic & Bulk */}
+      {/* Loading overlay - Basic & Bulk */}
       {loading && (
         <div className="loading-overlay">
           <div className="loading-card" style={{ alignItems: 'center', textAlign: 'center' }}>
@@ -358,7 +358,7 @@ export default function VerificationPage() {
         </div>
       )}
 
-      {/* Mint two-stage overlay — shown while running */}
+      {/* Mint two-stage overlay - shown while running */}
       {mintStages && mintRunning && (
         <div className="loading-overlay">
           <div className="loading-card">
@@ -380,7 +380,7 @@ export default function VerificationPage() {
 
       <div className="card">
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
-          {[['basic','Basic (QR / Hash)'],['mint','Mint (Single File)'],['bulk','Bulk Mint']].map(([m, label]) => (
+          {[['basic', 'Basic (QR / Hash)'], ['mint', 'Mint (Single File)'], ['bulk', 'Bulk Mint']].map(([m, label]) => (
             <button key={m} className={`btn${mode === m ? '' : ' btn-outline'}`} style={{ flex: 1 }} onClick={() => switchMode(m)}>
               {label}
             </button>
@@ -483,7 +483,7 @@ export default function VerificationPage() {
         </div>
       )}
 
-      {/* Mint stage results — shown after both stages complete */}
+      {/* Mint stage results - shown after both stages complete */}
       {mintDone && (
         <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <h3 style={{ margin: 0 }}>Mint Verification Results</h3>
@@ -498,14 +498,14 @@ export default function VerificationPage() {
               {mintStages.s1 === 'pass'
                 ? <CheckCircle size={18} color="#22c55e" />
                 : <AlertCircle size={18} color="#ef4444" />}
-              <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Stage 1 — Hash Integrity Check: {mintStages.s1 === 'pass' ? 'PASS' : 'FAILED'}</span>
+              <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Stage 1 - Hash Integrity Check: {mintStages.s1 === 'pass' ? 'PASS' : 'FAILED'}</span>
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {mintStages.s1 === 'pass'
                 ? 'The file\'s cryptographic fingerprint matches a record in the Mint registry. No tampering detected.'
                 : 'The file\'s hash does not match any registered Mint record. This means either the file content has been altered (even slightly), or this file was never minted through MediLance.'}
             </p>
-              {mintStages.s1 === 'pass' && mintStages.s1rec && (
+            {mintStages.s1 === 'pass' && mintStages.s1rec && (
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(34,197,94,0.15)' }}>
                 <RecordGrid rec={mintStages.s1rec} history={mintStages.s1history || null} />
                 <FraudPanel fraud={mintStages.s1fraud || null} />
@@ -513,17 +513,16 @@ export default function VerificationPage() {
             )}
           </div>
 
-          {/* Stage 2 — context-aware: neutral if S1 passed, warning if S1 failed */}
+          {/* Stage 2 - context-aware: neutral if S1 passed, warning if S1 failed */}
           <div style={{
             padding: '1rem', borderRadius: 8,
             background: mintStages.s1 === 'pass' && mintStages.s2 === 'pass'
               ? 'rgba(37,99,235,0.06)'
               : mintStages.s2 === 'pass' ? 'rgba(250,204,21,0.07)'
-              : mintStages.s2 === 'no-qr' ? 'rgba(255,255,255,0.03)' : 'rgba(239,68,68,0.07)',
-            border: `1px solid ${
-              mintStages.s1 === 'pass' && mintStages.s2 === 'pass' ? 'rgba(37,99,235,0.25)'
-              : mintStages.s2 === 'pass' ? 'rgba(250,204,21,0.3)'
-              : mintStages.s2 === 'no-qr' ? 'var(--border)' : 'rgba(239,68,68,0.25)'}`,
+                : mintStages.s2 === 'no-qr' ? 'rgba(255,255,255,0.03)' : 'rgba(239,68,68,0.07)',
+            border: `1px solid ${mintStages.s1 === 'pass' && mintStages.s2 === 'pass' ? 'rgba(37,99,235,0.25)'
+                : mintStages.s2 === 'pass' ? 'rgba(250,204,21,0.3)'
+                  : mintStages.s2 === 'no-qr' ? 'var(--border)' : 'rgba(239,68,68,0.25)'}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
               {mintStages.s1 === 'pass' && mintStages.s2 === 'pass' && <Info size={18} color="var(--primary)" />}
@@ -531,7 +530,7 @@ export default function VerificationPage() {
               {mintStages.s2 === 'fail' && <AlertCircle size={18} color="#ef4444" />}
               {mintStages.s2 === 'no-qr' && <Info size={18} color="var(--text-muted)" />}
               <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>
-                Stage 2 — QR Code Detection:&nbsp;
+                Stage 2 - QR Code Detection:&nbsp;
                 {{ pass: 'QR FOUND', fail: 'QR INVALID', 'no-qr': 'NO QR DETECTED' }[mintStages.s2]}
               </span>
             </div>
@@ -544,12 +543,12 @@ export default function VerificationPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', padding: '0.6rem 0.75rem', background: 'rgba(250,204,21,0.1)', borderRadius: 6, border: '1px solid rgba(250,204,21,0.25)' }}>
                     <AlertTriangle size={15} color="#facc15" />
                     <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#facc15' }}>
-                      Not a Mint-verified file — double-check these details against the physical record
+                      Not a Mint-verified file - double-check these details against the physical record
                     </span>
                   </div>
                 )}
                 {mintStages.s1 === 'pass'
-                  ? <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>QR record is consistent with Stage 1 — no discrepancy detected.</p>
+                  ? <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>QR record is consistent with Stage 1 - no discrepancy detected.</p>
                   : <RecordGrid rec={mintStages.s2rec} />}
               </div>
             )}

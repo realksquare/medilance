@@ -39,6 +39,9 @@ export default function Navbar() {
               <Link to="/create" className="nav-link" style={navLinkStyle}>ISSUE</Link>
               <Link to="/bulk"   className="nav-link" style={navLinkStyle}>BULK</Link>
               <Link to="/verify" className="nav-link" style={navLinkStyle}>VERIFY</Link>
+              {user && ['verifier', 'dual'].includes(user.role) && (
+                <Link to="/verifier" className="nav-link" style={{ ...navLinkStyle, color: 'var(--primary)' }}>VERIFIER</Link>
+              )}
             </div>
           </div>
 
@@ -54,7 +57,7 @@ export default function Navbar() {
             {user ? (
               /* Logged-in state */
               <>
-                <Link to="/profile" className="nav-link nav-username" style={navLinkStyle}>
+                <Link to={user.isMasterAdmin ? "/admin" : "/profile"} className="nav-link nav-username" style={navLinkStyle}>
                   {user.username.toUpperCase()}
                 </Link>
                 <button
@@ -91,11 +94,14 @@ export default function Navbar() {
           <Link to="/create" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>ISSUE RECORD</Link>
           <Link to="/bulk"   onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>BATCH PROCESSING</Link>
           <Link to="/verify" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>VERIFY RECORD</Link>
+          {user && ['verifier', 'dual'].includes(user.role) && (
+            <Link to="/verifier" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>VERIFIER DASHBOARD</Link>
+          )}
 
           {user ? (
             <>
-              <Link to="/profile" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                MY IDENTITY ({user.username})
+              <Link to={user.isMasterAdmin ? "/admin" : "/profile"} onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                {user.isMasterAdmin ? `MASTER ADMIN (${user.username})` : `MY IDENTITY (${user.username})`}
               </Link>
               <button onClick={handleLogout} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, background: 'none', border: 'none', color: '#ef4444', textAlign: 'left', cursor: 'pointer', padding: 0 }}>
                 LOGOUT

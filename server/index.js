@@ -27,9 +27,10 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { connectToDB, getDB } = require('./db');
 const { computeRiskScore } = require('./fraud');
-const userRoutes    = require('./routes/userRoutes');
-const adminRoutes   = require('./routes/adminRoutes');
+const userRoutes      = require('./routes/userRoutes');
+const adminRoutes     = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const verifierRoutes  = require('./routes/verifierRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -72,6 +73,7 @@ app.use(async (req, res, next) => {
 app.use('/api/users',     userRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/verifier',  verifierRoutes);
 
 // Protocol Guard Middleware
 const requireRegisteredUser = async (req, res, next) => {
@@ -252,6 +254,7 @@ app.post('/api/verify-record', checkVerificationLimit, async (req, res) => {
 
 app.post('/api/verify-file', checkVerificationLimit, upload.single('file'), async (req, res) => {
     try {
+        const username = req.headers['x-username'] || 'guest';
         if (!req.file) return res.status(400).json({ error: 'File is required' });
         const fileHash = await hashFileBuffer(req.file.buffer, req.file.mimetype);
         const db = getDB();

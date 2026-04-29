@@ -55,17 +55,41 @@ const col = (name) => {
             return { modifiedCount: 0 };
         },
 
-        find: (q = {}) => ({
-            sort: () => ({
-                limit: (n = 100) => ({
-                    toArray: async () =>
-                        localStore[name]
-                            .filter(doc => Object.entries(q).every(([k, v]) => doc[k] === v))
-                            .slice(-n)
-                            .reverse()
-                })
-            })
-        })
+        find: (q = {}) => {
+            let results = localStore[name].filter(doc => {
+                if (Object.keys(q).length === 0) return true;
+                return Object.entries(q).every(([k, v]) => {
+                    if (v && typeof v === 'object' && v.$in) return v.$in.includes(doc[k]);
+                    return doc[k] === v;
+                });
+            });
+            const cursor = {
+                sort: () => { results.reverse(); return cursor; },
+                limit: (n) => { results = results.slice(0, n); return cursor; },
+                toArray: async () => results
+            };
+            return cursor;
+        },
+
+        deleteOne: async (q) => {
+            const idx = localStore[name].findIndex(doc => Object.entries(q).every(([k, v]) => doc[k] === v));
+            if (idx !== -1) {
+                localStore[name].splice(idx, 1);
+                save();
+                return { deletedCount: 1 };
+            }
+            return { deletedCount: 0 };
+        },
+
+        deleteMany: async (q) => {
+            const initialLen = localStore[name].length;
+            localStore[name] = localStore[name].filter(doc => {
+                if (q._id && q._id.$in) return !q._id.$in.includes(doc._id);
+                return !Object.entries(q).every(([k, v]) => doc[k] === v);
+            });
+            save();
+            return { deletedCount: initialLen - localStore[name].length };
+        }
     };
 };
 

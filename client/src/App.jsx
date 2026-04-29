@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AuthGate from './pages/AuthGate';
 import AdminDashboard from './pages/AdminDashboard';
+import VerifierDashboard from './pages/VerifierDashboard';
 
 // Guard: redirect logged-in users away from login/register
 function GuestOnly({ children }) {
@@ -160,7 +161,8 @@ function AppRoutes() {
           <Route path="/create" element={<CreateRecord />} />
           <Route path="/verify" element={<VerificationPage />} />
           <Route path="/bulk"   element={<BulkUpload />} />
-          <Route path="/admin"  element={<AdminDashboard />} />
+          <Route path="/admin"    element={<AdminDashboard />} />
+          <Route path="/verifier" element={<VerifierDashboard />} />
         </Routes>
       </main>
 
