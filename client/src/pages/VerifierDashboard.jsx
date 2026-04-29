@@ -7,8 +7,9 @@ import {
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FraudPanel from '../components/FraudPanel';
+import API_BASE from '../config';
 
-const API = 'http://localhost:3005/api/verifier';
+const API = `${API_BASE}/api/verifier`;
 
 const SCORE_STYLE = (score) => {
   if (score < 55) return { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', label: 'Critical' };

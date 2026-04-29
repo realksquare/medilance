@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Check, X, Trash2, LogOut, Users, ChevronDown, Pencil, Save, BarChart2, AlertTriangle, TrendingDown, FileText, Settings, Ghost, Calendar, ChevronsUp, Zap, CheckCircle2, Star, Copy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
-const API = 'http://localhost:3005/api/admin';
+const API = `${API_BASE}/api/admin`;
 
 const SYSTEM_ROLES = [
   { value: 'issuer', label: 'Issuer - can issue and create records' },
@@ -101,7 +102,7 @@ export default function AdminDashboard() {
   const fetchAnalytics = async (uname) => {
     setAnalyticsLoading(true);
     try {
-      const res = await fetch('http://localhost:3005/api/analytics/provider-risk', {
+      const res = await fetch(`${API_BASE}/api/analytics/provider-risk`, {
         headers: { 'x-admin-user': uname },
       });
       const data = await res.json();
@@ -123,7 +124,7 @@ export default function AdminDashboard() {
   const fetchGhost = async (uname) => {
     setGhostLoading(true);
     try {
-      const res = await fetch('http://localhost:3005/api/analytics/ghost-procedures', {
+      const res = await fetch(`${API_BASE}/api/analytics/ghost-procedures`, {
         headers: { 'x-admin-user': uname },
       });
       const data = await res.json();
@@ -135,7 +136,7 @@ export default function AdminDashboard() {
   const fetchExpress = async (uname) => {
     setExpressLoading(true);
     try {
-      const res = await fetch('http://localhost:3005/api/analytics/express-approval', {
+      const res = await fetch(`${API_BASE}/api/analytics/express-approval`, {
         headers: { 'x-admin-user': uname },
       });
       const data = await res.json();

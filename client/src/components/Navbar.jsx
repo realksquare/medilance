@@ -70,11 +70,11 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              /* Guest state */
-              <>
+              /* Guest state - hidden on mobile, shown in mobile menu instead */
+              <span className="desktop-links">
                 <Link to="/login" className="nav-link" style={navLinkStyle}>USER LOGIN</Link>
                 <Link to="/admin" className="nav-link" style={{ ...navLinkStyle, opacity: 0.55 }}>MASTER LOGIN</Link>
-              </>
+              </span>
             )}
 
             <button className="mobile-toggle" onClick={toggleMenu} style={{ background: 'none', border: 'none', color: 'var(--text)', padding: '10px', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>

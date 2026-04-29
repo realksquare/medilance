@@ -4,6 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Upload, Download, Table, CheckCircle2, ArrowLeft, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
 const CSV_FIELDS = [
   'patientName',
@@ -69,7 +70,7 @@ export default function BulkUpload() {
     setIsProcessing(true);
     const username = user?.username || 'guest';
     try {
-      const res = await fetch('http://localhost:3005/api/bulk-create', {
+      const res = await fetch(`${API_BASE}/api/bulk-create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-username': username },
         body: JSON.stringify({ records: parsedData }),

@@ -6,6 +6,7 @@ import { CheckCircle, AlertCircle, Camera, Upload, ArrowLeft, Info, AlertTriangl
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FraudPanel from './FraudPanel';
+import API_BASE from '../config';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href;
 
@@ -212,7 +213,7 @@ export default function VerificationPage() {
     setLoadingLabel('Verifying'); setLoading(true);
     await sleep(50);
     try {
-      const res = await fetch('http://localhost:3005/api/verify-record', {
+      const res = await fetch(`${API_BASE}/api/verify-record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-username': user?.username || 'guest' },
         body: JSON.stringify({ dataHash: hashInput }),
@@ -239,7 +240,7 @@ export default function VerificationPage() {
     let s1pass = false, s1rec = null, s1fraud = null, s1history = null;
     try {
       const body = new FormData(); body.append('file', file);
-      const res = await fetch('http://localhost:3005/api/verify-file', {
+      const res = await fetch(`${API_BASE}/api/verify-file`, {
         method: 'POST', headers: { 'x-username': username }, body,
       });
       const data = await res.json();
@@ -258,7 +259,7 @@ export default function VerificationPage() {
 
     if (s2hash) {
       try {
-        const res = await fetch('http://localhost:3005/api/verify-record', {
+        const res = await fetch(`${API_BASE}/api/verify-record`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-username': username },
           body: JSON.stringify({ dataHash: s2hash }),
@@ -280,7 +281,7 @@ export default function VerificationPage() {
     try {
       const body = new FormData();
       bulkFiles.forEach(f => body.append('files', f));
-      const res = await fetch('http://localhost:3005/api/bulk-verify-mint', {
+      const res = await fetch(`${API_BASE}/api/bulk-verify-mint`, {
         method: 'POST', headers: { 'x-username': user?.username || 'guest' }, body,
       });
       const data = await res.json();

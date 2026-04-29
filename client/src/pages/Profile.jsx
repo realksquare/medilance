@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Shield, Activity, Clock, Mail, CheckCircle2, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
 export default function Profile() {
   // AuthContext is the single source of truth for who is logged in
@@ -49,7 +50,7 @@ export default function Profile() {
     const uname = currentUsername || username;
     if (!uname || uname === 'undefined' || uname === ':username') return;
     try {
-      const res = await fetch(`http://localhost:3005/api/users/${uname}`);
+      const res = await fetch(`${API_BASE}/api/users/${uname}`);
       if (!res.ok) return; // 404 = Local Mode or new user, keep cached profile
       const data = await res.json();
       localStorage.setItem('profile', JSON.stringify(data.user));
@@ -71,7 +72,7 @@ export default function Profile() {
   const handleSetup = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:3005/api/users/setup', {
+      const res = await fetch(`${API_BASE}/api/users/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -99,7 +100,7 @@ export default function Profile() {
       // while the browser still has the profile cached in localStorage.
       const cachedProfile = profile || JSON.parse(localStorage.getItem('profile') || '{}');
       if (cachedProfile.username) {
-        await fetch('http://localhost:3005/api/users/setup', {
+        await fetch(`${API_BASE}/api/users/setup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -113,7 +114,7 @@ export default function Profile() {
         });
       }
 
-      const res = await fetch('http://localhost:3005/api/users/send-otp', {
+      const res = await fetch(`${API_BASE}/api/users/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username })
@@ -136,7 +137,7 @@ export default function Profile() {
     e.preventDefault();
     setVerifying(true);
     try {
-      const res = await fetch('http://localhost:3005/api/users/verify-otp', {
+      const res = await fetch(`${API_BASE}/api/users/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, otp })

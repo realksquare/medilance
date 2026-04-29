@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { Download, CheckCircle, AlertCircle, ArrowLeft, Paperclip } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
 export default function CreateRecord() {
   const { user } = useAuth();
@@ -42,7 +43,7 @@ export default function CreateRecord() {
 
     try {
       const username = user?.username || 'guest';
-      const apiBase = 'http://localhost:3005';
+      const apiBase = API_BASE;
       const path = mode === 'basic' ? '/api/create-record' : '/api/create-record-file';
       let body;
       let headers = { 'x-username': username };

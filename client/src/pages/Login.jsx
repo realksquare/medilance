@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
-const API = 'http://localhost:3005/api';
+const API = `${API_BASE}/api`;
 
 export default function Login() {
   const { login } = useAuth();
@@ -36,7 +37,7 @@ export default function Login() {
       login(data.user);
       navigate('/profile');
     } catch {
-      setStatus('Cannot reach server. Is it running on port 3005?');
+      setStatus('Cannot reach server. Please try again later.');
     } finally {
       setLoading(false);
     }

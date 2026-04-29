@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
-const API = 'http://localhost:3005/api';
+const API = `${API_BASE}/api`;
 
 const ROLES = ['Doctor', 'Nurse', 'Administrator', 'Researcher', 'Patient', 'Insurance Agent', 'Lab Technician'];
 const TYPES = ['hospital', 'clinic', 'laboratory', 'insurance', 'individual'];
@@ -54,7 +55,7 @@ export default function Register() {
 
       setTimeout(() => navigate('/profile'), 1200);
     } catch {
-      setStatus({ type: 'error', msg: 'Cannot reach server. Is it running on port 3005?' });
+      setStatus({ type: 'error', msg: 'Cannot reach server. Please try again later.' });
     } finally {
       setLoading(false);
     }
