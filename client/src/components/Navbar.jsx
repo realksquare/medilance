@@ -35,6 +35,7 @@ export default function Navbar() {
           <div className="nav-left">
             <Link to="/" className="logo">MEDILANCE</Link>
             <div className="nav-links desktop-links">
+              <Link to="/"       className="nav-link" style={navLinkStyle}>HOME</Link>
               <Link to="/create" className="nav-link" style={navLinkStyle}>ISSUE</Link>
               <Link to="/bulk"   className="nav-link" style={navLinkStyle}>BULK</Link>
               <Link to="/verify" className="nav-link" style={navLinkStyle}>VERIFY</Link>
@@ -86,6 +87,7 @@ export default function Navbar() {
           position: 'fixed', top: '72px', left: 0, right: 0, bottom: 0,
           background: 'var(--bg)', padding: '3rem 1.5rem', gap: '2rem', zIndex: 2000,
         }}>
+          <Link to="/"       onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>DASHBOARD HOME</Link>
           <Link to="/create" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>ISSUE RECORD</Link>
           <Link to="/bulk"   onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>BATCH PROCESSING</Link>
           <Link to="/verify" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>VERIFY RECORD</Link>
