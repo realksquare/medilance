@@ -1,6 +1,5 @@
-// Central API base URL.
-// In production (Vercel), set VITE_API_URL to your Render backend URL.
-// In development, falls back to localhost:3005.
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+// API base URL — hardcoded for local/LAN demo.
+// To switch to Render deployment, replace with the live Render URL.
+const API_BASE = 'http://localhost:3005';
 
 export default API_BASE;

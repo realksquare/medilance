@@ -15,7 +15,7 @@ MediLance is not just a document scanner; it is a **Hybrid Deterministic Fraud E
 ## ⚙️ How It Works (Our "Secret Sauce")
 
 ### 1. Cryptographic Proof of Integrity (The "Mint" Protocol)
-We **never** store sensitive medical PDFs on central servers, ensuring 100% data privacy compliance. Instead, we generate a unique **cryptographic hash (fingerprint)** for every document at the moment it is issued. 
+We **never** store sensitive medical PDFs on databases, ensuring 100% data privacy compliance. Instead, we generate a unique **cryptographic hash (fingerprint)** for every document at the moment it is issued. 
 * **The Win:** If a scammer alters even a single pixel of a PDF before submitting it for a claim, the mathematical hash changes, and MediLance instantly rejects it as a forgery. 
 
 ### 2. Cross-Network Heuristic Engine
