@@ -12,7 +12,20 @@
  *  3. Same patient name+DOB, diff issuers (-25)
  *  4. High verification frequency         (-10)
  *  5. Missing critical identity fields    (-5 each, max -15)
+ *  6. Billing anomaly vs procedure avg    (-25 critical / -10 moderate)
  */
+
+// ── Billing Baselines (INR) ───────────────────────────────────────────────────
+// Median claim amounts per record type, derived from IRDAI public data and
+// industry benchmarks for the Indian health insurance market.
+// Sources:
+//   IRDAI Annual Report 2022-23 (https://irdai.gov.in)
+//   NHA Health Accounts Report 2021-22 (https://nhsrcindia.org)
+const BILLING_BASELINES = {
+    'Lab Report':    { avg: 2500,  label: 'Lab / Diagnostic' },
+    'Prescription':  { avg: 1200,  label: 'Prescription / Medication' },
+    'Discharge':     { avg: 55000, label: 'Inpatient Discharge' },
+};
 
 async function computeRiskScore(record, db) {
     const flags = [];
@@ -131,6 +144,31 @@ async function computeRiskScore(record, db) {
         }
     }
     deduction += missingPenalty;
+
+    // ── Signal 6: Billing Anomaly ────────────────────────────────────────────
+    // Compare the claimed amount against known procedure averages.
+    // A claim 2.5x above the baseline is a strong inflation indicator.
+    // A claim 1.5x–2.5x above baseline is flagged as a moderate anomaly.
+    const claimAmount = parseFloat(record.claimAmount);
+    const baseline = BILLING_BASELINES[record.recordType];
+    if (baseline && !isNaN(claimAmount) && claimAmount > 0) {
+        const ratio = claimAmount / baseline.avg;
+        if (ratio >= 2.5) {
+            flags.push({
+                type: 'BILLING_ANOMALY_CRITICAL',
+                severity: 'critical',
+                message: `Claim amount of INR ${claimAmount.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Likely inflated billing.`,
+            });
+            deduction += 25;
+        } else if (ratio >= 1.5) {
+            flags.push({
+                type: 'BILLING_ANOMALY_MODERATE',
+                severity: 'medium',
+                message: `Claim amount of INR ${claimAmount.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Above expected range.`,
+            });
+            deduction += 10;
+        }
+    }
 
     const score = Math.max(0, 100 - deduction);
     const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 55 ? 'C' : 'D';

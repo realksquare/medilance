@@ -11,7 +11,8 @@ export default function CreateRecord() {
     patientName: '', gender: '', age: '', dob: '',
     registerNumber: '', bloodGroup: '', existingConditions: 'None',
     contactNumber: '', address: '', recordType: '',
-    diagnosis: '', doctorName: '', issueDate: new Date().toISOString().split('T')[0], issuerName: ''
+    diagnosis: '', doctorName: '', issueDate: new Date().toISOString().split('T')[0], issuerName: '',
+    claimAmount: ''
   });
   const [file, setFile] = useState(null);
   const [qrCode, setQrCode] = useState(null);
@@ -199,6 +200,17 @@ export default function CreateRecord() {
                     <option value="Prescription">Prescription</option>
                     <option value="Discharge">Discharge</option>
                   </select>
+                </div>
+                <div>
+                  <label>Claim Amount (INR) <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8em' }}>optional, for fraud scoring</span></label>
+                  <input
+                    name="claimAmount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g. 4500"
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <label>Consulting Doctor</label>
