@@ -96,7 +96,45 @@ async function run() {
     await createPDF(fakeMintData, null, 'fake_mint_record.pdf'); // We never register this one to the DB!
     console.log('✓ Created fake_mint_record.pdf (Tampered, unregistered)');
 
-    console.log('\nAll done! 4 dummy records created in the server folder.');
+    // 5. HIGH COST BASIC RECORD (Triggers BILLING_ANOMALY -25)
+    const highCostData = {
+        patientName: 'Bob Builder', registerNumber: 'ID-1234', dob: '1985-05-05', gender: 'Male', bloodGroup: 'A+',
+        recordType: 'Lab Report', doctorName: 'Dr. Expensive', issueDate: '2026-04-29', diagnosis: 'Standard test but extremely high cost', medCosts: '150000'
+    };
+    
+    const res5 = await fetch(`${API}/create-record`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-username': 'master_admin' },
+        body: JSON.stringify({ recordData: highCostData })
+    });
+    const d5 = await res5.json();
+    if(d5.dataHash) {
+        await createPDF(highCostData, JSON.stringify({ type: 'MEDILANCE_RECORD', dataHash: d5.dataHash }), 'high_cost_record.pdf');
+        console.log('✓ Created high_cost_record.pdf (Triggers billing anomaly)');
+    }
+
+    // 6. GHOST RECORD (Triggers SIMULTANEOUS_BILLING and PATIENT_COLLISION vs Jane Doe's record)
+    // First, register a shady user
+    await fetch(`${API}/users/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'shady_clinic', password: 'password', fullName: 'Shady Clinic', role: 'issuer', organization: 'Shady Clinic' })
+    });
+
+    const ghostData = {
+        patientName: 'Jane Doe', registerNumber: 'ID-8888', dob: '1990-01-01', gender: 'Female', bloodGroup: 'O+',
+        recordType: 'Prescription', doctorName: 'Dr. Ghost', issueDate: '2026-04-30', diagnosis: 'Ghost pills', medCosts: '500'
+    };
+    
+    const res6 = await fetch(`${API}/create-record`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-username': 'shady_clinic' },
+        body: JSON.stringify({ recordData: ghostData })
+    });
+    const d6 = await res6.json();
+    if(d6.dataHash) {
+        await createPDF(ghostData, JSON.stringify({ type: 'MEDILANCE_RECORD', dataHash: d6.dataHash }), 'ghost_record.pdf');
+        console.log('✓ Created ghost_record.pdf (Triggers simultaneous billing collision)');
+    }
+
+    console.log('\nAll done! 6 dummy records created in the server folder.');
 }
 
 run().catch(console.error);

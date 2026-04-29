@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(localStorage.getItem('theme') === 'dark');
 
@@ -35,12 +36,12 @@ export default function Navbar() {
           <div className="nav-left">
             <Link to="/" className="logo">MEDILANCE</Link>
             <div className="nav-links desktop-links">
-              <Link to="/" className="nav-link" style={navLinkStyle}>HOME</Link>
-              <Link to="/create" className="nav-link" style={navLinkStyle}>ISSUE</Link>
-              <Link to="/bulk" className="nav-link" style={navLinkStyle}>BULK</Link>
-              <Link to="/verify" className="nav-link" style={navLinkStyle}>VERIFY</Link>
+              <Link to="/" className="nav-link" style={{ ...navLinkStyle, color: location.pathname === '/' ? 'var(--primary)' : 'var(--text)' }}>HOME</Link>
+              <Link to="/create" className="nav-link" style={{ ...navLinkStyle, color: location.pathname === '/create' ? 'var(--primary)' : 'var(--text)' }}>ISSUE</Link>
+              <Link to="/bulk" className="nav-link" style={{ ...navLinkStyle, color: location.pathname === '/bulk' ? 'var(--primary)' : 'var(--text)' }}>BULK</Link>
+              <Link to="/verify" className="nav-link" style={{ ...navLinkStyle, color: location.pathname === '/verify' ? 'var(--primary)' : 'var(--text)' }}>VERIFY</Link>
               {user && ['verifier', 'dual'].includes(user.role) && (
-                <Link to="/anomalies" className="nav-link" style={{ ...navLinkStyle, color: 'var(--primary)' }}>ANOMALIES</Link>
+                <Link to="/anomalies" className="nav-link" style={{ ...navLinkStyle, color: location.pathname === '/anomalies' ? 'var(--primary)' : 'var(--text)' }}>ANOMALIES</Link>
               )}
             </div>
           </div>
@@ -90,12 +91,12 @@ export default function Navbar() {
           position: 'fixed', top: '72px', left: 0, right: 0, bottom: 0,
           background: 'var(--bg)', padding: '3rem 1.5rem', gap: '2rem', zIndex: 2000,
         }}>
-          <Link to="/" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>DASHBOARD HOME</Link>
-          <Link to="/create" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>ISSUE RECORD</Link>
-          <Link to="/bulk" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>BATCH PROCESSING</Link>
-          <Link to="/verify" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>VERIFY RECORD</Link>
+          <Link to="/" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: location.pathname === '/' ? 'var(--primary)' : 'var(--text)' }}>HOME</Link>
+          <Link to="/create" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: location.pathname === '/create' ? 'var(--primary)' : 'var(--text)' }}>ISSUE RECORD</Link>
+          <Link to="/bulk" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: location.pathname === '/bulk' ? 'var(--primary)' : 'var(--text)' }}>BATCH PROCESSING</Link>
+          <Link to="/verify" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: location.pathname === '/verify' ? 'var(--primary)' : 'var(--text)' }}>VERIFY RECORD</Link>
           {user && ['verifier', 'dual'].includes(user.role) && (
-            <Link to="/anomalies" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>ANOMALIES MANAGER</Link>
+            <Link to="/anomalies" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: location.pathname === '/anomalies' ? 'var(--primary)' : 'var(--text)' }}>ANOMALIES MANAGER</Link>
           )}
 
           {user ? (
