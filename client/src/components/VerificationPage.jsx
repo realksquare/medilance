@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import * as pdfjsLib from 'pdfjs-dist';
 import jsQR from 'jsqr';
-import { CheckCircle, AlertCircle, Camera, Upload, ArrowLeft, Info, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Camera, Upload, ArrowLeft, Info, AlertTriangle, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FraudPanel from './FraudPanel';
@@ -458,6 +458,38 @@ export default function VerificationPage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Trust Score Explanation Box */}
+      <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <Shield size={20} color="var(--primary)" />
+          <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Understanding the MediLance Trust Score</h3>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1rem' }}>
+          Every verified record is assigned an Integrity Score from 0 to 100. This score indicates the overall reliability and trustworthiness of the document based on automated network checks.
+        </p>
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          <div style={{ padding: '0.75rem', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Starting Score: 100</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.2rem' }}>All records begin with a perfect score if the cryptographic hash matches the original document.</p>
+          </div>
+          
+          <div style={{ padding: '0.75rem', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: 0, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <AlertTriangle size={14} color="#f59e0b" /> Score Deductions
+            </p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.3rem', lineHeight: 1.5 }}>
+              Points are deducted when potential anomalies are detected:
+            </p>
+            <ul style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.4rem', paddingLeft: '1.2rem', lineHeight: 1.6 }}>
+              <li><strong>Duplicate Records:</strong> Same patient with multiple similar records on the same day (-40 points).</li>
+              <li><strong>Provider Risk:</strong> Record issued by a provider with a history of anomalies (-10 to -30 points).</li>
+              <li><strong>Billing Anomalies:</strong> Costs significantly higher than the standard baseline for the procedure (-15 points).</li>
+              <li><strong>Incompatible Combinations:</strong> Procedures that logically conflict with each other (-25 points).</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Generic error (Basic / Bulk) */}

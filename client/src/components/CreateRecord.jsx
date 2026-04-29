@@ -25,11 +25,11 @@ export default function CreateRecord() {
   };
 
   // Block characters that don't belong in a name (letters and spaces only)
-  const onlyLetters = (e) => { if (!/^[a-zA-Z\s]$/.test(e.key) && !['Backspace','Tab','ArrowLeft','ArrowRight','Delete'].includes(e.key)) e.preventDefault(); };
+  const onlyLetters = (e) => { if (!/^[a-zA-Z\s]$/.test(e.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes(e.key)) e.preventDefault(); };
   // Block non-alphanumeric for IDs
-  const onlyAlphaNum = (e) => { if (!/^[a-zA-Z0-9]$/.test(e.key) && !['Backspace','Tab','ArrowLeft','ArrowRight','Delete','-'].includes(e.key)) e.preventDefault(); };
+  const onlyAlphaNum = (e) => { if (!/^[a-zA-Z0-9]$/.test(e.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', '-'].includes(e.key)) e.preventDefault(); };
   // Block non-numeric for age
-  const onlyDigits = (e) => { if (!/^[0-9]$/.test(e.key) && !['Backspace','Tab','ArrowLeft','ArrowRight','Delete'].includes(e.key)) e.preventDefault(); };
+  const onlyDigits = (e) => { if (!/^[0-9]$/.test(e.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes(e.key)) e.preventDefault(); };
 
   // Reusable label component with required asterisk
   const Req = () => <span style={{ color: '#ef4444', marginLeft: '2px' }}>*</span>;
@@ -130,29 +130,29 @@ export default function CreateRecord() {
             {mode === 'mint' && (
               <section style={{ padding: '1.5rem', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--surface)' }}>
                 <h3>Document Attachment</h3>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="file"
-                  id="mint-file-input"
-                  style={{ display: 'none' }}
-                  onChange={(e) => setFile(e.target.files[0])}
-                  required
-                />
-                <label htmlFor="mint-file-input" className={`file-upload-label${file ? ' has-file' : ''}`}
-                  style={{ paddingRight: file ? '2.75rem' : undefined }}>
-                  <span style={{ fontSize: '1.1rem' }}>📎</span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                    {file ? file.name : 'Click to attach document (PDF or Image)'}
-                  </span>
-                </label>
-                {file && (
-                  <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); const i = document.getElementById('mint-file-input'); if(i) i.value=''; }}
-                    style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#22c55e', fontSize: '1rem', lineHeight: 1 }}
-                    title="Remove file">
-                    ×
-                  </button>
-                )}
-              </div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="file"
+                    id="mint-file-input"
+                    style={{ display: 'none' }}
+                    onChange={(e) => setFile(e.target.files[0])}
+                    required
+                  />
+                  <label htmlFor="mint-file-input" className={`file-upload-label${file ? ' has-file' : ''}`}
+                    style={{ paddingRight: file ? '2.75rem' : undefined }}>
+                    <span style={{ fontSize: '1.1rem' }}>📎</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                      {file ? file.name : 'Click to attach document (PDF or Image)'}
+                    </span>
+                  </label>
+                  {file && (
+                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); const i = document.getElementById('mint-file-input'); if (i) i.value = ''; }}
+                      style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#22c55e', fontSize: '1rem', lineHeight: 1 }}
+                      title="Remove file">
+                      ×
+                    </button>
+                  )}
+                </div>
               </section>
             )}
 
@@ -212,7 +212,7 @@ export default function CreateRecord() {
                   </select>
                 </div>
                 <div>
-                  <label>Procedure / Consultation / Medication Costs (INR) <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8em' }}>optional, for fraud scoring</span></label>
+                  <label>Procedure / Consultation / Medication Costs (INR) <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8em' }}>optional</span></label>
                   <input
                     name="medCosts"
                     type="number"
