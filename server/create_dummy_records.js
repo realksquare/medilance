@@ -56,7 +56,7 @@ async function run() {
     try {
         const d1 = JSON.parse(text1);
         if(d1.dataHash) {
-            await createPDF(legitBasicData, JSON.stringify({ type: 'MEDILANCE_RECORD', dataHash: d1.dataHash }), 'legit_basic_record.pdf');
+            await createPDF(legitBasicData, `http://localhost:3000/verify/${d1.dataHash}`, 'legit_basic_record.pdf');
             console.log('✓ Created legit_basic_record.pdf');
         } else {
             console.error('Failed to create legit basic record:', d1);
@@ -70,7 +70,7 @@ async function run() {
         patientName: 'John Fake', registerNumber: 'ID-0000', dob: '1980-01-01', gender: 'Male', bloodGroup: 'B-',
         recordType: 'Prescription', doctorName: 'Dr. Quack', issueDate: '2026-04-30', diagnosis: 'Prescribed fake medicine', medCosts: '500'
     };
-    await createPDF(fakeBasicData, JSON.stringify({ type: 'MEDILANCE_RECORD', dataHash: 'abcd1234fakehash5678' }), 'fake_basic_record.pdf');
+    await createPDF(fakeBasicData, `http://localhost:3000/verify/abcd1234fakehash5678`, 'fake_basic_record.pdf');
     console.log('✓ Created fake_basic_record.pdf');
 
     // 3. LEGIT MINT RECORD
@@ -108,15 +108,15 @@ async function run() {
     });
     const d5 = await res5.json();
     if(d5.dataHash) {
-        await createPDF(highCostData, JSON.stringify({ type: 'MEDILANCE_RECORD', dataHash: d5.dataHash }), 'high_cost_record.pdf');
+        await createPDF(highCostData, `http://localhost:3000/verify/${d5.dataHash}`, 'high_cost_record.pdf');
         console.log('✓ Created high_cost_record.pdf (Triggers billing anomaly)');
     }
 
     // 6. GHOST RECORD (Triggers SIMULTANEOUS_BILLING and PATIENT_COLLISION vs Jane Doe's record)
     // First, register a shady user
-    await fetch(`${API}/users/register`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'shady_clinic', password: 'password', fullName: 'Shady Clinic', role: 'issuer', organization: 'Shady Clinic' })
+    await fetch(`${API}/admin/create-user`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-user': 'master_admin' },
+        body: JSON.stringify({ username: 'shady_clinic', password: 'password', fullName: 'Shady Clinic', role: 'issuer', type: 'clinic', institution: 'Shady Clinic' })
     });
 
     const ghostData = {
@@ -130,7 +130,7 @@ async function run() {
     });
     const d6 = await res6.json();
     if(d6.dataHash) {
-        await createPDF(ghostData, JSON.stringify({ type: 'MEDILANCE_RECORD', dataHash: d6.dataHash }), 'ghost_record.pdf');
+        await createPDF(ghostData, `http://localhost:3000/verify/${d6.dataHash}`, 'ghost_record.pdf');
         console.log('✓ Created ghost_record.pdf (Triggers simultaneous billing collision)');
     }
 
