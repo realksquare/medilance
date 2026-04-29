@@ -27,8 +27,9 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { connectToDB, getDB } = require('./db');
 const { computeRiskScore } = require('./fraud');
-const userRoutes = require('./routes/userRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const userRoutes    = require('./routes/userRoutes');
+const adminRoutes   = require('./routes/adminRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -68,8 +69,9 @@ app.use(async (req, res, next) => {
     }
 });
 
-app.use('/api/users', userRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/users',     userRoutes);
+app.use('/api/admin',     adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Protocol Guard Middleware
 const requireRegisteredUser = async (req, res, next) => {

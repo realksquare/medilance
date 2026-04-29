@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Plus, Check, X, Trash2, LogOut, Users, ChevronDown, Pencil, Save } from 'lucide-react';
+import { Shield, Plus, Check, X, Trash2, LogOut, Users, ChevronDown, Pencil, Save, BarChart2, AlertTriangle, TrendingDown } from 'lucide-react';
 
 const API = 'http://localhost:3005/api/admin';
 
@@ -58,6 +58,10 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [editStatus, setEditStatus] = useState('');
+  // ── Phase 3.1: Provider Analytics ──
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'analytics'
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const toast = (msg) => { setActionMsg(msg); setTimeout(() => setActionMsg(''), 3000); };
 
@@ -69,6 +73,18 @@ export default function AdminDashboard() {
       setUsers(data.users || []);
     } catch { setUsers([]); }
     finally { setLoadingUsers(false); }
+  };
+
+  const fetchAnalytics = async (adminCreds) => {
+    setAnalyticsLoading(true);
+    try {
+      const res = await fetch('http://localhost:3005/api/analytics/provider-risk', {
+        headers: { 'x-admin-user': adminCreds.username, 'x-admin-pass': adminCreds.password },
+      });
+      const data = await res.json();
+      setAnalytics(data);
+    } catch { setAnalytics(null); }
+    finally { setAnalyticsLoading(false); }
   };
 
   const handleLogin = async (e) => {
@@ -84,6 +100,7 @@ export default function AdminDashboard() {
       setAdminUser(data.user);
       setPhase('dash');
       fetchUsers(data.user.username);
+      fetchAnalytics({ username: data.user.username, password: loginForm.password });
     } catch { setLoginError('Cannot reach server. Is it running on port 3005?'); }
   };
 
@@ -207,7 +224,28 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Tab Bar */}
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0' }}>
+        {[
+          { id: 'users', label: 'User Management', icon: <Users size={14} /> },
+          { id: 'analytics', label: 'Provider Analytics', icon: <BarChart2 size={14} /> },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.6rem 1rem', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em',
+            textTransform: 'uppercase', background: 'none', border: 'none', cursor: 'pointer',
+            borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
+            color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+            marginBottom: '-1px', transition: 'color 0.15s',
+          }}>
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Users Tab ── */}
+      {activeTab === 'users' && (
+        <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total Accounts', value: users.length },
@@ -365,6 +403,108 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* ── Provider Analytics Tab ── */}
+      {activeTab === 'analytics' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div>
+              <h2 style={{ fontWeight: 900, fontSize: '1.1rem', margin: 0 }}>Provider Risk Leaderboard</h2>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                Ranked by Integrity Index — most suspicious at top. Powered by Phase 2 fraud signals.
+              </p>
+            </div>
+            <button className="btn btn-outline" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => fetchAnalytics({ username: adminUser.username, password: loginForm.password })}>
+              <BarChart2 size={13} /> Refresh
+            </button>
+          </div>
+
+          {analyticsLoading && (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              Computing risk scores across all records...
+            </div>
+          )}
+
+          {!analyticsLoading && analytics && analytics.providers.length === 0 && (
+            <div style={{ padding: '3rem', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: 12 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No records issued yet. Analytics will appear once providers start issuing records.</p>
+            </div>
+          )}
+
+          {!analyticsLoading && analytics && analytics.providers.map((p, i) => {
+            const gradeColor = p.trustGrade === 'A' ? '#22c55e' : p.trustGrade === 'B' ? '#3b82f6' : p.trustGrade === 'C' ? '#f59e0b' : '#ef4444';
+            const scoreBarColor = p.avgScore >= 90 ? '#22c55e' : p.avgScore >= 75 ? '#3b82f6' : p.avgScore >= 55 ? '#f59e0b' : '#ef4444';
+            return (
+              <div key={p.username} className="card" style={{ padding: '1.25rem', marginBottom: '0.75rem' }}>
+                {/* Row 1: Identity + Grade */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--text-muted)', minWidth: '1.5rem' }}>#{i + 1}</span>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', margin: 0 }}>{p.institution || p.username}</p>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.1rem' }}>@{p.username} • {p.totalRecords} record{p.totalRecords !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                    {/* Grade Badge */}
+                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: gradeColor, letterSpacing: '-0.04em' }}>{p.trustGrade}</span>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: scoreBarColor, letterSpacing: '-0.04em' }}>{p.avgScore}</p>
+                      <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>Integrity</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Score Bar */}
+                <div style={{ margin: '0.85rem 0', background: 'var(--surface)', borderRadius: 99, height: 6 }}>
+                  <div style={{ width: `${p.avgScore}%`, height: '100%', borderRadius: 99, background: scoreBarColor, transition: 'width 0.4s ease' }} />
+                </div>
+
+                {/* Row 2: Stats + Top Flags */}
+                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ef4444', margin: 0 }}>{p.criticalCount}</p>
+                      <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>Critical</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f97316', margin: 0 }}>{p.highCount}</p>
+                      <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>High</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f59e0b', margin: 0 }}>{p.mediumCount}</p>
+                      <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>Medium</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: p.anomalyRate > 30 ? '#ef4444' : 'var(--text)', margin: 0 }}>{p.anomalyRate}%</p>
+                      <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>Anomaly Rate</p>
+                    </div>
+                  </div>
+
+                  {p.topFlags.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginLeft: 'auto' }}>
+                      {p.topFlags.map(f => (
+                        <span key={f.type} style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '0.2rem 0.55rem', borderRadius: 99, background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+                          {f.type.replace(/_/g, ' ')} ×{f.count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {analytics?.generatedAt && (
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.75rem', textAlign: 'right' }}>
+              Last computed: {new Date(analytics.generatedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
