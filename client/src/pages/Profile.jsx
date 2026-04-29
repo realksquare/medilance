@@ -8,7 +8,21 @@ export default function Profile() {
   const { user: authUser, login } = useAuth();
   const username = authUser?.username || '';
 
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(() => {
+    // Seed immediately from authUser so the page is never blank on first login.
+    // fetchProfile() will overwrite this with full server data once it resolves.
+    if (authUser?.username) {
+      return {
+        username: authUser.username,
+        fullName: authUser.fullName || '',
+        emailVerified: authUser.emailVerified || false,
+        role: authUser.role || '',
+        type: authUser.type || '',
+        institution: authUser.institution || '',
+      };
+    }
+    return null;
+  });
   const [history, setHistory] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);

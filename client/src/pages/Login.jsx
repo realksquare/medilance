@@ -33,7 +33,7 @@ export default function Login() {
         return;
       }
       const data = await res.json();
-      login({ username: data.user.username, fullName: data.user.fullName, emailVerified: data.user.emailVerified });
+      login(data.user);
       navigate('/profile');
     } catch {
       setStatus('Cannot reach server. Is it running on port 3005?');
