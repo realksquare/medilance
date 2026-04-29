@@ -70,7 +70,7 @@ export default function FraudPanel({ fraud }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Zap size={13} color={cfg.color} />
           <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: cfg.color }}>
-            Phase 2 · Fraud Intelligence
+            MediLance Intelligence
           </span>
         </div>
       </div>

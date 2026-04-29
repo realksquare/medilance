@@ -50,8 +50,12 @@ const FAQ_ITEMS = [
     a: 'Most hospital record systems are siloed and rely on paper or proprietary portals. MediLance creates a verifiable, portable proof that does not depend on the issuing institution being online. A patient, insurer, or doctor can verify a record independently without calling anyone.',
   },
   {
-    q: 'What is on the roadmap for MediLance?',
-    a: 'Phase 1 is done and covers data integrity at the document level. Phase 2 introduces a Fraud Intelligence engine that scores each record for risk, detects duplicate claims across providers, and flags billing anomalies in real time. Phase 3 adds network-level analytics to spot coordinated fraud across provider groups. Phase 4 uses the confidence scores to fast-track legitimate claims automatically.',
+    q: 'How does MediLance detect fraudulent claims?',
+    a: 'MediLance runs every record through a multi-signal fraud engine the moment it is verified. It checks for duplicate records issued to the same patient on the same day, cross-provider hash collisions, billing amounts that deviate significantly from expected baselines, and treatment combinations that are medically implausible. Each signal reduces the record Integrity Score, giving insurers and verifiers a clear risk grade.',
+  },
+  {
+    q: 'What is the Express Approval system?',
+    a: 'Records that score 95 or above on the Integrity Index and whose billing falls within the expected range for the procedure are automatically flagged as pre-approved. This means verified, clean claims bypass manual review entirely, reducing payout delays for legitimate healthcare. Records that fall below that threshold are routed to the Anomalies Manager for human review.',
   },
   {
     q: 'How can I get this engine for my institution?',
@@ -162,7 +166,7 @@ function AppRoutes() {
           <Route path="/verify" element={<VerificationPage />} />
           <Route path="/bulk"   element={<BulkUpload />} />
           <Route path="/admin"    element={<AdminDashboard />} />
-          <Route path="/verifier" element={<VerifierDashboard />} />
+          <Route path="/anomalies" element={<VerifierDashboard />} />
         </Routes>
       </main>
 

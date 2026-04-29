@@ -6,7 +6,6 @@ const { sendOTP } = require('../utils/emailService');
 
 // Get Profile (also stamps activationDate on first login for managed users)
 router.get('/:username', async (req, res) => {
-    console.log(`GET /api/users/${req.params.username} called`);
     try {
         const db = getDB();
         const user = await db.collection('users').findOne({ username: req.params.username });
@@ -75,7 +74,6 @@ router.post('/setup', async (req, res) => {
 
 // Send OTP
 router.post('/send-otp', async (req, res) => {
-    console.log("POST /api/users/send-otp called", req.body);
     try {
         const { username } = req.body;
         const db = getDB();

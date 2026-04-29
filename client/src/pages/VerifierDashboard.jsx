@@ -138,7 +138,7 @@ export default function VerifierDashboard() {
         <ShieldAlert size={40} color="#ef4444" style={{ marginBottom: '1rem' }} />
         <h2 style={{ fontWeight: 800, marginBottom: '0.5rem' }}>Access Denied</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          Your account role is <strong>{user.role}</strong>. Only verifier or dual-role accounts can access the Verifier Dashboard.
+          Your account role is <strong>{user.role}</strong>. Only verifier or dual-role accounts can access the Anomalies Manager.
         </p>
         <Link to="/" className="btn btn-outline" style={{ display: 'inline-flex', marginTop: '1.5rem', textDecoration: 'none' }}>Back to Home</Link>
       </div>
@@ -164,10 +164,10 @@ export default function VerifierDashboard() {
         </Link>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--primary)', textTransform: 'uppercase' }}>Phase 4.2 - Verifier Dashboard</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--primary)', textTransform: 'uppercase' }}>Anomalies Manager</span>
             <h1 style={{ fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', marginTop: '0.2rem' }}>Claims Risk Queue</h1>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-              Logged in as <strong>{user.username}</strong> - {user.fullName || user.institution || 'Verifier'}
+              Logged in as <strong>{user.username}</strong> - {user.fullName || user.institution || 'Agent'}
             </p>
           </div>
           <button
@@ -323,7 +323,7 @@ export default function VerifierDashboard() {
 
               {/* Action panel */}
               <div className="card" style={{ padding: '1.5rem' }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '1rem' }}>Verifier Decision</p>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '1rem' }}>Agent Decision</p>
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap' }}>

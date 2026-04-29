@@ -35,12 +35,12 @@ export default function Navbar() {
           <div className="nav-left">
             <Link to="/" className="logo">MEDILANCE</Link>
             <div className="nav-links desktop-links">
-              <Link to="/"       className="nav-link" style={navLinkStyle}>HOME</Link>
+              <Link to="/" className="nav-link" style={navLinkStyle}>HOME</Link>
               <Link to="/create" className="nav-link" style={navLinkStyle}>ISSUE</Link>
-              <Link to="/bulk"   className="nav-link" style={navLinkStyle}>BULK</Link>
+              <Link to="/bulk" className="nav-link" style={navLinkStyle}>BULK</Link>
               <Link to="/verify" className="nav-link" style={navLinkStyle}>VERIFY</Link>
               {user && ['verifier', 'dual'].includes(user.role) && (
-                <Link to="/verifier" className="nav-link" style={{ ...navLinkStyle, color: 'var(--primary)' }}>VERIFIER</Link>
+                <Link to="/anomalies" className="nav-link" style={{ ...navLinkStyle, color: 'var(--primary)' }}>ANOMALIES</Link>
               )}
             </div>
           </div>
@@ -90,12 +90,12 @@ export default function Navbar() {
           position: 'fixed', top: '72px', left: 0, right: 0, bottom: 0,
           background: 'var(--bg)', padding: '3rem 1.5rem', gap: '2rem', zIndex: 2000,
         }}>
-          <Link to="/"       onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>DASHBOARD HOME</Link>
+          <Link to="/" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>DASHBOARD HOME</Link>
           <Link to="/create" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>ISSUE RECORD</Link>
-          <Link to="/bulk"   onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>BATCH PROCESSING</Link>
+          <Link to="/bulk" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>BATCH PROCESSING</Link>
           <Link to="/verify" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>VERIFY RECORD</Link>
           {user && ['verifier', 'dual'].includes(user.role) && (
-            <Link to="/verifier" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>VERIFIER DASHBOARD</Link>
+            <Link to="/anomalies" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>ANOMALIES MANAGER</Link>
           )}
 
           {user ? (
@@ -109,7 +109,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login"  onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>USER LOGIN</Link>
+              <Link to="/login" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700 }}>USER LOGIN</Link>
               <Link to="/admin" onClick={toggleMenu} className="nav-link" style={{ fontSize: '1.25rem', fontWeight: 700, opacity: 0.55 }}>MASTER LOGIN</Link>
             </>
           )}

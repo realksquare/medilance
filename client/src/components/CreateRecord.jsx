@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import QRCode from 'qrcode';
-import { Download, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Download, CheckCircle, AlertCircle, ArrowLeft, Paperclip } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -140,7 +140,7 @@ export default function CreateRecord() {
                   />
                   <label htmlFor="mint-file-input" className={`file-upload-label${file ? ' has-file' : ''}`}
                     style={{ paddingRight: file ? '2.75rem' : undefined }}>
-                    <span style={{ fontSize: '1.1rem' }}>📎</span>
+                    <Paperclip size={16} style={{ flexShrink: 0 }} />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                       {file ? file.name : 'Click to attach document (PDF or Image)'}
                     </span>

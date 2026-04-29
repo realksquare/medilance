@@ -52,7 +52,7 @@ export default function AdminDashboard() {
 
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
-  
+
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -529,7 +529,7 @@ export default function AdminDashboard() {
             <div>
               <h2 style={{ fontWeight: 900, fontSize: '1.1rem', margin: 0 }}>Provider Risk Leaderboard</h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                Ranked by Integrity Index - most suspicious at top. Powered by Phase 2 fraud signals.
+                Ranked by Integrity Index - most suspicious providers listed first.
               </p>
             </div>
             <button className="btn btn-outline" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -754,7 +754,7 @@ export default function AdminDashboard() {
                 <Zap size={18} color="#22c55e" /> Express Approval Queue
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                Records with 95+ Integrity Score and within-percentile billing — pre-qualified for automatic payout.
+                Records with 95+ Integrity Score and within-percentile billing - pre-qualified for automatic payout.
               </p>
             </div>
             <button className="btn btn-outline" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -768,13 +768,13 @@ export default function AdminDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
               {[
                 { label: 'Total Approved', value: expressData.total || 0, color: '#22c55e' },
-                { label: 'Platinum', value: expressData.breakdown?.platinum || 0, color: '#a855f7', icon: '💎' },
-                { label: 'Gold', value: expressData.breakdown?.gold || 0, color: '#f59e0b', icon: '🥇' },
-                { label: 'Fast-Track', value: expressData.breakdown?.fast || 0, color: '#3b82f6', icon: '⚡' },
+                { label: 'Platinum', value: expressData.breakdown?.platinum || 0, color: '#a855f7' },
+                { label: 'Gold', value: expressData.breakdown?.gold || 0, color: '#f59e0b' },
+                { label: 'Fast-Track', value: expressData.breakdown?.fast || 0, color: '#3b82f6' },
               ].map(s => (
                 <div key={s.label} className="card" style={{ padding: '1.1rem', textAlign: 'center' }}>
                   <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', margin: 0 }}>
-                    {s.icon ? `${s.icon} ` : ''}{s.label}
+                    {s.label}
                   </p>
                   <p style={{ fontSize: '1.8rem', fontWeight: 900, color: s.color, margin: 0, marginTop: '0.2rem' }}>{s.value}</p>
                 </div>
@@ -795,9 +795,9 @@ export default function AdminDashboard() {
 
           {!expressLoading && expressData?.approved?.map((rec, i) => {
             const tierStyles = {
-              PLATINUM: { bg: 'rgba(168,85,247,0.07)', border: 'rgba(168,85,247,0.3)', color: '#a855f7', label: '💎 Platinum', scoreBg: '#a855f7' },
-              GOLD:     { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.3)',  color: '#f59e0b', label: '🥇 Gold',     scoreBg: '#f59e0b' },
-              FAST:     { bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.3)',  color: '#3b82f6', label: '⚡ Fast-Track', scoreBg: '#3b82f6' },
+              PLATINUM: { bg: 'rgba(168,85,247,0.07)', border: 'rgba(168,85,247,0.3)', color: '#a855f7', label: 'Platinum', scoreBg: '#a855f7' },
+              GOLD:     { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.3)',  color: '#f59e0b', label: 'Gold',     scoreBg: '#f59e0b' },
+              FAST:     { bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.3)',  color: '#3b82f6', label: 'Fast-Track', scoreBg: '#3b82f6' },
             };
             const ts = tierStyles[rec.approvalTier] || tierStyles.FAST;
             const isExpanded = expandedExpress === i;
@@ -817,7 +817,7 @@ export default function AdminDashboard() {
                       <p style={{ fontWeight: 800, fontSize: '0.95rem', margin: 0, color: 'var(--text)' }}>{rec.patientName}</p>
                       <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.15rem 0.5rem', borderRadius: 99, background: ts.color, color: '#fff' }}>{ts.label}</span>
                       {rec.flagCount === 0 && (
-                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', padding: '0.15rem 0.5rem', borderRadius: 99 }}>✓ Zero Flags</span>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', padding: '0.15rem 0.5rem', borderRadius: 99 }}>Zero Flags</span>
                       )}
                     </div>
                     <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, marginTop: '0.15rem' }}>
@@ -942,13 +942,13 @@ export default function AdminDashboard() {
           )}
 
           {loadingRecords ? (
-             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-               Loading records...
-             </div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              Loading records...
+            </div>
           ) : records.length === 0 ? (
-             <div style={{ padding: '3rem', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: 12 }}>
-               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No records found.</p>
-             </div>
+            <div style={{ padding: '3rem', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: 12 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No records found.</p>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {records.map(rec => {
@@ -957,7 +957,7 @@ export default function AdminDashboard() {
                 return (
                   <div key={rec._id} style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem 1rem', background: isSelected ? 'rgba(37,99,235,0.05)' : 'var(--bg)', cursor: 'pointer' }}
-                         onClick={() => setExpandedRecord(isExpanded ? null : rec._id)}>
+                      onClick={() => setExpandedRecord(isExpanded ? null : rec._id)}>
                       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center' }}>
                         <input type="checkbox" checked={isSelected} onChange={(e) => {
                           const newSet = new Set(selectedRecords);
