@@ -24,6 +24,16 @@ export default function CreateRecord() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Block characters that don't belong in a name (letters and spaces only)
+  const onlyLetters = (e) => { if (!/^[a-zA-Z\s]$/.test(e.key) && !['Backspace','Tab','ArrowLeft','ArrowRight','Delete'].includes(e.key)) e.preventDefault(); };
+  // Block non-alphanumeric for IDs
+  const onlyAlphaNum = (e) => { if (!/^[a-zA-Z0-9]$/.test(e.key) && !['Backspace','Tab','ArrowLeft','ArrowRight','Delete','-'].includes(e.key)) e.preventDefault(); };
+  // Block non-numeric for age
+  const onlyDigits = (e) => { if (!/^[0-9]$/.test(e.key) && !['Backspace','Tab','ArrowLeft','ArrowRight','Delete'].includes(e.key)) e.preventDefault(); };
+
+  // Reusable label component with required asterisk
+  const Req = () => <span style={{ color: '#ef4444', marginLeft: '2px' }}>*</span>;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -150,22 +160,22 @@ export default function CreateRecord() {
               <h3>Patient Identity</h3>
               <div className="form-group">
                 <div className="form-full">
-                  <label>Full Name</label>
-                  <input name="patientName" placeholder="Mr. Krishna" onChange={handleChange} required />
+                  <label>Full Name<Req /></label>
+                  <input name="patientName" placeholder="Mr. Krishna" onChange={handleChange} onKeyDown={onlyLetters} pattern="[A-Za-z\s]+" required />
                 </div>
                 <div>
-                  <label>Register Number</label>
-                  <input name="registerNumber" placeholder="ID-123456" onChange={handleChange} required />
+                  <label>Register Number<Req /></label>
+                  <input name="registerNumber" placeholder="ID-123456" onChange={handleChange} onKeyDown={onlyAlphaNum} pattern="[A-Za-z0-9\-]+" required />
                 </div>
                 <div>
-                  <label>Date of Birth</label>
+                  <label>Date of Birth<Req /></label>
                   <div style={{ position: 'relative' }}>
                     <input name="dob" type="date" onChange={handleChange} required style={{ cursor: 'pointer' }} />
                     <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', filter: 'brightness(2)' }}>📅</div>
                   </div>
                 </div>
                 <div>
-                  <label>Gender</label>
+                  <label>Gender<Req /></label>
                   <select name="gender" onChange={handleChange} required>
                     <option value="">Select</option>
                     <option value="Male">Male</option>
@@ -173,7 +183,7 @@ export default function CreateRecord() {
                   </select>
                 </div>
                 <div>
-                  <label>Blood Group</label>
+                  <label>Blood Group<Req /></label>
                   <select name="bloodGroup" onChange={handleChange} required>
                     <option value="">Select</option>
                     <option value="A+">A+</option>
@@ -193,7 +203,7 @@ export default function CreateRecord() {
               <h3>Clinical Context</h3>
               <div className="form-group">
                 <div>
-                  <label>Record Type</label>
+                  <label>Record Type<Req /></label>
                   <select name="recordType" onChange={handleChange} required>
                     <option value="">Select</option>
                     <option value="Lab Report">Lab Report</option>
@@ -213,18 +223,18 @@ export default function CreateRecord() {
                   />
                 </div>
                 <div>
-                  <label>Consulting Doctor</label>
-                  <input name="doctorName" placeholder="Dr. Kavinesh" onChange={handleChange} required />
+                  <label>Consulting Doctor<Req /></label>
+                  <input name="doctorName" placeholder="Dr. Kavinesh" onChange={handleChange} onKeyDown={onlyLetters} pattern="[A-Za-z\s\.]+" required />
                 </div>
                 <div>
-                  <label>Date of Issuance</label>
+                  <label>Date of Issuance<Req /></label>
                   <div style={{ position: 'relative' }}>
                     <input name="issueDate" type="date" value={formData.issueDate} onChange={handleChange} required style={{ cursor: 'pointer' }} />
                     <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', filter: 'brightness(2)' }}>📅</div>
                   </div>
                 </div>
                 <div className="form-full">
-                  <label>Clinical Observation</label>
+                  <label>Clinical Observation<Req /></label>
                   <textarea name="diagnosis" placeholder="Primary diagnosis and notes..." rows="3" onChange={handleChange} required />
                 </div>
               </div>

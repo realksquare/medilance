@@ -113,7 +113,7 @@ function AppRoutes() {
                 <h1 className="hero-h1" style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', fontWeight: 900, letterSpacing: '-0.05em' }}>
                   Medical record integrity, <span style={{ color: 'var(--primary)' }}>anchored.</span>
                 </h1>
-                <p style={{ marginTop: '1.5rem', fontSize: '1.2rem', color: 'var(--text-muted)', maxWidth: '600px' }}>
+                <p style={{ marginTop: '1.5rem', fontSize: '1.2rem', color: 'var(--text-muted)', maxWidth: '600px', lineHeight: '1.75' }}>
                   MediLance provides a tamper-proof layer for healthcare data,
                   ensuring trust between patients, providers, and insurers.
                 </p>
