@@ -150,22 +150,22 @@ async function computeRiskScore(record, db) {
     // Compare the claimed amount against known procedure averages.
     // A claim 2.5x above the baseline is a strong inflation indicator.
     // A claim 1.5x–2.5x above baseline is flagged as a moderate anomaly.
-    const claimAmount = parseFloat(record.claimAmount);
+    const medCosts = parseFloat(record.medCosts);
     const baseline = BILLING_BASELINES[record.recordType];
-    if (baseline && !isNaN(claimAmount) && claimAmount > 0) {
-        const ratio = claimAmount / baseline.avg;
+    if (baseline && !isNaN(medCosts) && medCosts > 0) {
+        const ratio = medCosts / baseline.avg;
         if (ratio >= 2.5) {
             flags.push({
                 type: 'BILLING_ANOMALY_CRITICAL',
                 severity: 'critical',
-                message: `Claim amount of INR ${claimAmount.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Likely inflated billing.`,
+                message: `Procedure cost of INR ${medCosts.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Likely inflated billing.`,
             });
             deduction += 25;
         } else if (ratio >= 1.5) {
             flags.push({
                 type: 'BILLING_ANOMALY_MODERATE',
                 severity: 'medium',
-                message: `Claim amount of INR ${claimAmount.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Above expected range.`,
+                message: `Procedure cost of INR ${medCosts.toLocaleString('en-IN')} is ${ratio.toFixed(1)}x the typical ${baseline.label} average (INR ${baseline.avg.toLocaleString('en-IN')}). Above expected range.`,
             });
             deduction += 10;
         }

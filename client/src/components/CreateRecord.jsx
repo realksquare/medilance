@@ -12,7 +12,7 @@ export default function CreateRecord() {
     registerNumber: '', bloodGroup: '', existingConditions: 'None',
     contactNumber: '', address: '', recordType: '',
     diagnosis: '', doctorName: '', issueDate: new Date().toISOString().split('T')[0], issuerName: '',
-    claimAmount: ''
+    medCosts: ''
   });
   const [file, setFile] = useState(null);
   const [qrCode, setQrCode] = useState(null);
@@ -214,7 +214,7 @@ export default function CreateRecord() {
                 <div>
                   <label>Procedure / Consultation / Medication Costs (INR) <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8em' }}>optional, for fraud scoring</span></label>
                   <input
-                    name="claimAmount"
+                    name="medCosts"
                     type="number"
                     min="0"
                     step="1"

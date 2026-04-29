@@ -15,7 +15,7 @@ const CSV_FIELDS = [
   'doctorName',
   'issueDate',
   'diagnosis',
-  'claimAmount',
+  'medCosts',
 ];
 
 const CSV_PLACEHOLDER_ROW = [
@@ -115,7 +115,7 @@ export default function BulkUpload() {
             <span>
               CSV must contain these columns in order:&nbsp;
               <strong>{CSV_FIELDS.join(', ')}</strong>.&nbsp;
-              Use ISO dates (YYYY-MM-DD) for dob and issueDate. Blood group must be one of: A+, A-, B+, B-, AB+, AB-, O+, O-. claimAmount is optional (INR value for fraud scoring).
+              Use ISO dates (YYYY-MM-DD) for dob and issueDate. Blood group must be one of: A+, A-, B+, B-, AB+, AB-, O+, O-. medCosts is optional (INR value for fraud scoring).
             </span>
           </div>
 
@@ -147,7 +147,7 @@ export default function BulkUpload() {
               </span>
               {!csvFile && (
                 <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-                  Columns: patientName, registerNumber, dob, gender, bloodGroup, recordType, doctorName, issueDate, diagnosis, claimAmount (optional)
+                  Columns: patientName, registerNumber, dob, gender, bloodGroup, recordType, doctorName, issueDate, diagnosis, medCosts (optional)
                 </span>
               )}
             </label>
