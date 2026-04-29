@@ -56,13 +56,22 @@ const col = (name) => {
         },
 
         find: (q = {}) => {
-            let results = localStore[name].filter(doc => {
-                if (Object.keys(q).length === 0) return true;
-                return Object.entries(q).every(([k, v]) => {
-                    if (v && typeof v === 'object' && v.$in) return v.$in.includes(doc[k]);
+            const matchesQuery = (doc, query) => {
+                if (Object.keys(query).length === 0) return true;
+                return Object.entries(query).every(([k, v]) => {
+                    // Handle $or at the top level
+                    if (k === '$or' && Array.isArray(v)) return v.some(sub => matchesQuery(doc, sub));
+                    if (k === '$and' && Array.isArray(v)) return v.every(sub => matchesQuery(doc, sub));
+                    if (v && typeof v === 'object') {
+                        if ('$in'     in v) return v.$in.includes(doc[k]);
+                        if ('$nin'    in v) return !v.$nin.includes(doc[k]);
+                        if ('$ne'     in v) return doc[k] !== v.$ne;
+                        if ('$exists' in v) return v.$exists ? (k in doc && doc[k] !== undefined) : !(k in doc) || doc[k] === undefined;
+                    }
                     return doc[k] === v;
                 });
-            });
+            };
+            let results = localStore[name].filter(doc => matchesQuery(doc, q));
             const cursor = {
                 sort: () => { results.reverse(); return cursor; },
                 limit: (n) => { results = results.slice(0, n); return cursor; },
