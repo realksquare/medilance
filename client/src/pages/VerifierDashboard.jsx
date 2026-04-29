@@ -50,6 +50,7 @@ export default function VerifierDashboard() {
 
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [queueError, setQueueError] = useState('');
   const [selected, setSelected] = useState(null);
 
   const [action, setAction] = useState(null);
@@ -66,15 +67,17 @@ export default function VerifierDashboard() {
     setAction(null);
     setReason('');
     setSubmitMsg({ type: '', text: '' });
+    setQueueError('');
     try {
       const res = await fetch(`${API}/queue`, {
         headers: { 'x-username': user.username },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load queue.');
+      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
       setQueue(data.queue || []);
     } catch (err) {
       setQueue([]);
+      setQueueError(err.message);
     } finally {
       setLoading(false);
     }
@@ -229,7 +232,13 @@ export default function VerifierDashboard() {
             </div>
           )}
 
-          {!loading && filtered.length === 0 && (
+          {!loading && queueError && (
+            <div style={{ padding: '1rem 1.25rem', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              Error loading queue: {queueError}
+            </div>
+          )}
+
+          {!loading && !queueError && filtered.length === 0 && (
             <div style={{ padding: '3rem', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: 10 }}>
               <ShieldAlert size={28} color="var(--text-muted)" style={{ marginBottom: '0.75rem' }} />
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No records in this risk category.</p>
