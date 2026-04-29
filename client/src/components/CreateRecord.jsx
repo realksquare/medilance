@@ -94,7 +94,7 @@ export default function CreateRecord() {
 
       <header>
         <h1>Issue Secure Record</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Register a new immutable medical record with MediLance Protocol.</p>
+        <p style={{ color: 'var(--text-muted)', lineHeight: '1.75' }}>Register a new immutable medical record with MediLance Protocol.</p>
       </header>
 
       <div className="flex gap-4">
@@ -212,7 +212,7 @@ export default function CreateRecord() {
                   </select>
                 </div>
                 <div>
-                  <label>Claim Amount (INR) <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8em' }}>optional, for fraud scoring</span></label>
+                  <label>Procedure / Consultation / Medication Costs (INR) <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8em' }}>optional, for fraud scoring</span></label>
                   <input
                     name="claimAmount"
                     type="number"

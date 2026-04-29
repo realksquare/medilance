@@ -353,15 +353,17 @@ label {
   gap: 0.4rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--primary);
+  color: #fff;
+  background: var(--primary);
   text-decoration: none;
   letter-spacing: 0.03em;
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   border: 1px solid var(--primary);
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: background 0.2s, opacity 0.2s;
+  cursor: pointer;
 }
-.template-link:hover { background: rgba(37, 99, 235, 0.08); }
+.template-link:hover { background: #1d4ed8; opacity: 0.9; }
 
 .alert {
   display: flex;
