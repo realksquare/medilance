@@ -71,8 +71,9 @@ function VerificationHistoryBanner({ history }) {
 
 function RecordGrid({ rec, history }) {
   const ip = rec.issuerProfile;
+  const roleLabel = ip?.role === 'dual' ? 'Issuer & Verifier' : ip?.role;
   const entityLabel = ip
-    ? [ip.fullName, ip.role, ip.institution || ip.type].filter(Boolean).join(' · ')
+    ? [ip.fullName, roleLabel, ip.institution || ip.type].filter(Boolean).join(' · ')
     : rec.issuerUsername || null;
 
   const uploadedOn = rec.createdAt
