@@ -27,11 +27,27 @@ function PrivateRoute({ children }) {
 const FAQ_ITEMS = [
   {
     q: 'What is MediLance?',
-    a: 'MediLance is a platform that lets healthcare providers issue tamper-proof medical records and allows anyone with the record to verify its authenticity instantly. Think of it as a digital seal on your medical documents that cannot be faked without detection.',
+    a: 'MediLance is a robust solution designed to combat long-standing fraudulent claims in the medical insurance field. While it acts as a cryptographic-hash verification platform to ensure tamper-proof medical records, its core value lies in utilizing advanced, automated fraud-catching analytics to secure insurance workflows.',
   },
   {
     q: 'How does the verification actually work?',
     a: 'When a record is issued, MediLance generates a unique cryptographic fingerprint of the data or file and stores it. A QR code is produced that links to this fingerprint. Anyone can scan or paste the hash to confirm the record has not been altered since it was issued.',
+  },
+  {
+    q: 'How does MediLance detect fraudulent claims?',
+    a: 'MediLance runs every record through a multi-signal fraud engine the moment it is verified. It checks for duplicate records issued to the same patient on the same day, cross-provider hash collisions, billing amounts that deviate significantly from expected baselines, and treatment combinations that are medically implausible. Each signal reduces the record\'s Integrity Score, giving insurers and verifiers a clear risk grade.',
+  },
+  {
+    q: 'What are "Ghost Procedures" and how do you catch them?',
+    a: 'A "Ghost Procedure" is when fake medical procedures are billed without actually occurring. MediLance detects this by identifying impossible metadata anomalies—such as a single patient receiving overlapping treatments from completely different clinics simultaneously, or the exact same diagnostic image hash being reused across different providers to claim multiple payouts.',
+  },
+  {
+    q: 'What makes this better than existing systems?',
+    a: 'Most hospital record systems are siloed and rely on paper or proprietary portals, leaving massive loopholes for organized insurance fraud. MediLance creates a verifiable, portable proof that cannot be forged. Beyond simple verification, it actively analyzes claim patterns across the network, detecting referral loops and anomalies instantly—saving insurers from paying out millions in systemic fraud.',
+  },
+  {
+    q: 'What is the Express Approval system?',
+    a: 'Records that score 95 or above on the Integrity Index and whose billing falls within the expected range for the procedure are automatically flagged as pre-approved. This means verified, clean claims bypass manual review entirely, reducing payout delays for legitimate healthcare. Records that fall below that threshold are routed to the Anomalies Manager for human review.',
   },
   {
     q: 'What is the difference between Basic mode and Mint mode?',
@@ -42,24 +58,8 @@ const FAQ_ITEMS = [
     a: 'Yes. Before hashing, MediLance normalizes images by stripping camera metadata, converting to greyscale, and resizing to a standard width. This means a phone photo of a document taken in different lighting or at a slight angle will still produce the same hash as the source, unless the content itself has been altered.',
   },
   {
-    q: 'What is Bulk Mint Verification?',
-    a: 'Bulk Mint Verification lets you upload multiple documents at once and verify all of them in a single step. Each file is checked independently and you get a per-file result showing whether it is authentic or not. This is only available for Mint records because Basic records do not carry a file fingerprint.',
-  },
-  {
-    q: 'What makes this better than existing systems?',
-    a: 'Most hospital record systems are siloed and rely on paper or proprietary portals. MediLance creates a verifiable, portable proof that does not depend on the issuing institution being online. A patient, insurer, or doctor can verify a record independently without calling anyone.',
-  },
-  {
-    q: 'How does MediLance detect fraudulent claims?',
-    a: 'MediLance runs every record through a multi-signal fraud engine the moment it is verified. It checks for duplicate records issued to the same patient on the same day, cross-provider hash collisions, billing amounts that deviate significantly from expected baselines, and treatment combinations that are medically implausible. Each signal reduces the record Integrity Score, giving insurers and verifiers a clear risk grade.',
-  },
-  {
-    q: 'What is the Express Approval system?',
-    a: 'Records that score 95 or above on the Integrity Index and whose billing falls within the expected range for the procedure are automatically flagged as pre-approved. This means verified, clean claims bypass manual review entirely, reducing payout delays for legitimate healthcare. Records that fall below that threshold are routed to the Anomalies Manager for human review.',
-  },
-  {
     q: 'How can I get this engine for my institution?',
-    a: 'MediLance is designed to run as a private, decentralized engine owned by you. Each hospital, clinic, insurance company, or individual practitioner gets their own standalone instance that they control entirely. To get set up with a master account for your organization, reach out to the MediLance team. We will provision a master account unique to your institution, from which you can create and manage all your issuers and verifiers without depending on any third-party cloud.',
+    a: 'MediLance is designed to run as a private, decentralized engine owned by you. Each hospital, clinic, insurance company, or individual practitioner gets their own standalone instance that they control entirely. Reach out to the MediLance team to provision a master account unique to your institution.',
   },
   {
     q: 'What technology is behind MediLance?',
@@ -68,10 +68,6 @@ const FAQ_ITEMS = [
   {
     q: 'Does it work without internet?',
     a: 'Yes. MediLance is designed to run entirely offline on a local machine. The server and client both run locally, so there is no dependency on cloud connectivity for issuing or verifying records.',
-  },
-  {
-    q: 'Who can use MediLance?',
-    a: 'Doctors and hospital staff can issue records. Patients can receive a QR code linked to their record. Insurers, pharmacists, or other healthcare providers can scan or paste the hash to verify authenticity without needing an account.',
   },
 ];
 
