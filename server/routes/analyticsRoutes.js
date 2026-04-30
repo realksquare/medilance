@@ -189,7 +189,7 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
                             severity: 'critical',
                             type: 'DUPLICATE_SAME_DAY',
                             date,
-                            message: `${count}× "${type}" records on ${date} for the same patient — statistically improbable.`,
+                            message: `${count}x "${type}" records on ${date} for the same patient. Statistically improbable.`,
                         });
                     }
                 }
@@ -201,7 +201,7 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
                         severity: 'high',
                         type: 'HIGH_COST_CLUSTER',
                         date,
-                        message: `Total billed cost on ${date}: ₹${dayTotal.toLocaleString('en-IN')} across ${dayRecords.length} procedures — unusually high for a single day.`,
+                        message: `Total billed cost on ${date}: ₹${dayTotal.toLocaleString('en-IN')} across ${dayRecords.length} procedures. Unusually high for a single day.`,
                     });
                 }
 
@@ -212,7 +212,7 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
                         severity: 'high',
                         type: 'INCOMPATIBLE_COMBO',
                         date,
-                        message: `Simultaneous "Discharge" and "Lab Report" on ${date} — discharge typically concludes treatment; a same-day lab order is suspicious.`,
+                        message: `Simultaneous "Discharge" and "Lab Report" on ${date}. Discharge typically concludes treatment; a same-day lab order is suspicious.`,
                     });
                 }
                 if (types.includes('Discharge') && types.includes('Prescription')) {
@@ -220,19 +220,19 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
                         severity: 'medium',
                         type: 'INCOMPATIBLE_COMBO',
                         date,
-                        message: `Simultaneous "Discharge" and new "Prescription" issued on ${date} — post-discharge prescriptions should be dated after discharge.`,
+                        message: `Simultaneous "Discharge" and new "Prescription" issued on ${date}. Post-discharge prescriptions should be dated after discharge.`,
                     });
                 }
             }
 
-            // Signal 4: Ghost billing network — same patient, 3+ distinct issuers
+            // Signal 4: Ghost billing network. Same patient, 3+ distinct issuers
             const issuers = [...new Set(records.map(r => r.issuerUsername).filter(Boolean))];
             if (issuers.length >= 3) {
                 flags.push({
                     severity: 'critical',
                     type: 'MULTI_ISSUER_PATIENT',
                     date: null,
-                    message: `Patient ${regNum} has records from ${issuers.length} distinct issuers (${issuers.join(', ')}) — coordinated ghost billing network pattern.`,
+                    message: `Patient ${regNum} has records from ${issuers.length} distinct issuers (${issuers.join(', ')}). Coordinated ghost billing network pattern.`,
                 });
             }
 
@@ -306,7 +306,7 @@ router.get('/express-approval', requireVerifier, async (req, res) => {
             let billingRatio = null;
             if (baseline && !isNaN(medCosts) && medCosts > 0) {
                 billingRatio = parseFloat((medCosts / baseline).toFixed(2));
-                if (billingRatio > 1.5) continue; // above expected range — not fast-trackable
+                if (billingRatio > 1.5) continue; // above expected range, not fast-trackable
             }
 
             // Approval tier
@@ -315,11 +315,11 @@ router.get('/express-approval', requireVerifier, async (req, res) => {
             // Human-readable fast-track reason
             const reasons = [];
             if (flags.length === 0) reasons.push('No fraud signals detected.');
-            else reasons.push(`Only low-severity signal${flags.length > 1 ? 's' : ''} detected — no critical or high flags.`);
+            else reasons.push(`Only low-severity signal${flags.length > 1 ? 's' : ''} detected. No critical or high flags.`);
             if (billingRatio !== null) {
-                reasons.push(`Billing of ₹${medCosts.toLocaleString('en-IN')} is ${billingRatio}× the typical ${record.recordType} average — within expected range.`);
+                reasons.push(`Billing of \u20b9${medCosts.toLocaleString('en-IN')} is ${billingRatio}x the typical ${record.recordType} average. Within expected range.`);
             } else {
-                reasons.push('No billing data to cross-check — record type qualifies by integrity alone.');
+                reasons.push('No billing data to cross-check. Record type qualifies by integrity alone.');
             }
             if (record.issuerProfile?.institution) {
                 reasons.push(`Issued by a registered provider: ${record.issuerProfile.institution}.`);
