@@ -26,6 +26,29 @@ async function requireMasterAdmin(req, res, next) {
     }
 }
 
+// ── Verifier-or-Admin Guard ───────────────────────────────────────────────────
+// Allows: master admin (x-admin-user) OR any registered verifier/dual user (x-username)
+async function requireVerifier(req, res, next) {
+    try {
+        const db = getDB();
+        // Master admin path
+        const adminUser = req.headers['x-admin-user'];
+        if (adminUser) {
+            const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
+            if (admin) return next();
+        }
+        // Registered verifier / dual path
+        const username = req.headers['x-username'];
+        if (username && username !== 'guest') {
+            const user = await db.collection('users').findOne({ username });
+            if (user && (user.role === 'verifier' || user.role === 'dual' || user.isMasterAdmin)) return next();
+        }
+        return res.status(403).json({ error: 'Verifier access required.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
 // ── GET /api/analytics/provider-risk ─────────────────────────────────────────
 // For each issuer, score every record they have issued and compute:
 //   - avgScore         : mean Integrity Index across all their records
@@ -123,7 +146,7 @@ router.get('/provider-risk', requireMasterAdmin, async (req, res) => {
 //   4. Same patient issued records by 3+ distinct issuers (ghost billing network)
 const BILLING_BASELINES = { 'Lab Report': 2500, 'Prescription': 1200, 'Discharge': 55000 };
 
-router.get('/ghost-procedures', requireMasterAdmin, async (req, res) => {
+router.get('/ghost-procedures', requireVerifier, async (req, res) => {
     try {
         const db = getDB();
         const allRecords = await db.collection('medical_records').find({}).sort({}).limit(5000).toArray();
@@ -261,7 +284,7 @@ router.get('/ghost-procedures', requireMasterAdmin, async (req, res) => {
 //   - billingRatio    : how the claim compares to the procedure average
 const BILLING_BASELINES_4 = { 'Lab Report': 2500, 'Prescription': 1200, 'Discharge': 55000 };
 
-router.get('/express-approval', requireMasterAdmin, async (req, res) => {
+router.get('/express-approval', requireVerifier, async (req, res) => {
     try {
         const db = getDB();
         const allRecords = await db.collection('medical_records').find({}).sort({ createdAt: -1 }).limit(5000).toArray();
