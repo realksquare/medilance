@@ -1,5 +1,6 @@
 // API base URL — dynamic for local/LAN demo.
-// This allows your phone to automatically find your laptop's server.
-const API_BASE = `http://${window.location.hostname}:3005`;
+// By keeping this empty, requests go to the Vite proxy,
+// which securely forwards them to the Node server (avoids Mixed Content errors).
+const API_BASE = '';
 
 export default API_BASE;
