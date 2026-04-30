@@ -82,8 +82,8 @@ router.post('/verify-user', async (req, res) => {
         if (!admin) return res.status(403).json({ error: 'Admin access required' });
 
         const { username, verified } = req.body;
-        const target = await db.collection('users').findOne({ username, createdBy: adminUser });
-        if (!target) return res.status(404).json({ error: 'User not found or not under your account' });
+        const target = await db.collection('users').findOne({ username });
+        if (!target || target.isMasterAdmin) return res.status(404).json({ error: 'User not found' });
 
         await db.collection('users').updateOne({ username }, { $set: { adminVerified: !!verified } });
         res.json({ message: `User ${verified ? 'verified' : 'unverified'}` });
@@ -101,8 +101,8 @@ router.delete('/user/:username', async (req, res) => {
         const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
         if (!admin) return res.status(403).json({ error: 'Admin access required' });
 
-        const target = await db.collection('users').findOne({ username: req.params.username, createdBy: adminUser });
-        if (!target) return res.status(404).json({ error: 'User not found or not under your account' });
+        const target = await db.collection('users').findOne({ username: req.params.username });
+        if (!target || target.isMasterAdmin) return res.status(404).json({ error: 'User not found' });
 
         await db.collection('users').deleteOne({ username: req.params.username });
         res.json({ message: 'User removed' });
@@ -123,8 +123,8 @@ router.put('/update-user', async (req, res) => {
         const { originalUsername, username, fullName, role, type, institution, newPassword } = req.body;
         if (!originalUsername) return res.status(400).json({ error: 'originalUsername is required' });
 
-        const target = await db.collection('users').findOne({ username: originalUsername, createdBy: adminUser });
-        if (!target) return res.status(404).json({ error: 'User not found or not under your account' });
+        const target = await db.collection('users').findOne({ username: originalUsername });
+        if (!target || target.isMasterAdmin) return res.status(404).json({ error: 'User not found' });
 
         if (username && username !== originalUsername) {
             const conflict = await db.collection('users').findOne({ username });
