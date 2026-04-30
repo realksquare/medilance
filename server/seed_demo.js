@@ -175,12 +175,25 @@ const d6 = {
     issuerName: 'Unknown Pharmacy', medCosts: '75000',
 };
 
+// 5b. GHOST COLLISION PARTNER — same patient, same date, different issuer (City Clinic)
+// This paired record triggers Signals 2, 3, 7 when EITHER ghost record is verified
+const d5b = {
+    patientName: 'Arjun Mehta', registerNumber: 'PID-2024-GHOST',
+    dob: '1985-11-03', gender: 'Male', age: '40', bloodGroup: 'AB+',
+    existingConditions: 'None', contactNumber: '9000011111',
+    address: 'No.3, MG Road, Bangalore', recordType: 'Discharge',
+    diagnosis: 'Post-operative recovery - appendectomy (duplicate claim)',
+    doctorName: 'Dr. Krish S.', issueDate: '2026-04-15',
+    issuerName: 'City Clinic', medCosts: '58000',
+};
+
 async function main() {
     console.log('\n=== MediLance Demo Seeder ===\n');
 
-    const hash1 = createStableHash(d1);
-    const hash3 = createStableHash(d3);
-    const hash5 = createStableHash(d5);
+    const hash1  = createStableHash(d1);
+    const hash3  = createStableHash(d3);
+    const hash5  = createStableHash(d5);
+    const hash5b = createStableHash(d5b);
 
     console.log('Building PDFs with embedded QR codes...\n');
 
@@ -285,12 +298,13 @@ async function main() {
     const existing = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
 
     const medical_records = [
-        { ...d1, dataHash: hash1,   mode: 'basic', issuerUsername: iJ.username, issuerProfile: iJ.profile, createdAt: '2026-04-30T09:00:00.000Z', _id: 'demo_1' },
-        { ...d2, fileHash: r2.hash, mode: 'mint',  issuerUsername: iA.username, issuerProfile: iA.profile, createdAt: '2026-04-01T09:00:00.000Z', _id: 'demo_2' },
-        { ...d3, dataHash: hash3,   mode: 'basic', issuerUsername: iB.username, issuerProfile: iB.profile, createdAt: '2026-04-10T14:00:00.000Z', _id: 'demo_3' },
-        { ...d4, fileHash: r4.hash, mode: 'mint',  issuerUsername: iJ.username, issuerProfile: iJ.profile, createdAt: '2026-04-05T10:30:00.000Z', _id: 'demo_4' },
-        { ...d5, dataHash: hash5,   mode: 'basic', issuerUsername: iA.username, issuerProfile: iA.profile, createdAt: '2026-04-15T08:00:00.000Z', _id: 'demo_5' },
-        { ...d6, fileHash: r6.hash, mode: 'mint',  issuerUsername: iX.username, issuerProfile: iX.profile, createdAt: '2026-04-20T16:00:00.000Z', _id: 'demo_6' },
+        { ...d1,  dataHash: hash1,   mode: 'basic', issuerUsername: iJ.username, issuerProfile: iJ.profile, createdAt: '2026-04-30T09:00:00.000Z', _id: 'demo_1' },
+        { ...d2,  fileHash: r2.hash, mode: 'mint',  issuerUsername: iA.username, issuerProfile: iA.profile, createdAt: '2026-04-01T09:00:00.000Z', _id: 'demo_2' },
+        { ...d3,  dataHash: hash3,   mode: 'basic', issuerUsername: iB.username, issuerProfile: iB.profile, createdAt: '2026-04-10T14:00:00.000Z', _id: 'demo_3' },
+        { ...d4,  fileHash: r4.hash, mode: 'mint',  issuerUsername: iJ.username, issuerProfile: iJ.profile, createdAt: '2026-04-05T10:30:00.000Z', _id: 'demo_4' },
+        { ...d5,  dataHash: hash5,   mode: 'basic', issuerUsername: iA.username, issuerProfile: iA.profile, createdAt: '2026-04-15T08:00:00.000Z', _id: 'demo_5' },
+        { ...d5b, dataHash: hash5b,  mode: 'basic', issuerUsername: iB.username, issuerProfile: iB.profile, createdAt: '2026-04-15T09:15:00.000Z', _id: 'demo_5b' },
+        { ...d6,  fileHash: r6.hash, mode: 'mint',  issuerUsername: iX.username, issuerProfile: iX.profile, createdAt: '2026-04-20T16:00:00.000Z', _id: 'demo_6' },
     ];
 
     fs.writeFileSync(DB_FILE, JSON.stringify({ users: existing.users, actions: [], medical_records }, null, 2));
@@ -299,13 +313,14 @@ async function main() {
     console.log('PDFs -> server/demo_pdfs/');
     console.log('DB   -> local_db.json (records replaced, users preserved)\n');
     console.log('=== Records ===');
-    console.log(`1. Legit Basic   | Ananya Krishnan | dataHash: ${hash1.substring(0,24)}...`);
-    console.log(`2. Legit Mint    | Priya Sharma    | fileHash: ${r2.hash.substring(0,24)}...`);
-    console.log(`3. Fake Basic M  | Meena Iyer      | dataHash: ${hash3.substring(0,24)}...`);
-    console.log(`4. Fake Mint M   | Rajan Pillai    | fileHash: ${r4.hash.substring(0,24)}...`);
-    console.log(`5. Fake Basic C  | Arjun Mehta     | dataHash: ${hash5.substring(0,24)}...`);
-    console.log(`6. Fake Mint C   | Vikram Nair     | fileHash: ${r6.hash.substring(0,24)}...`);
-    console.log('\n=== IMPORTANT: Restart the server after this to reload local_db.json ===');
+    console.log(`1.  Legit Basic      | Ananya Krishnan | dataHash: ${hash1.substring(0,24)}...`);
+    console.log(`2.  Legit Mint       | Priya Sharma    | fileHash: ${r2.hash.substring(0,24)}...`);
+    console.log(`3.  Fake Basic M     | Meena Iyer      | dataHash: ${hash3.substring(0,24)}...`);
+    console.log(`4.  Fake Mint M      | Rajan Pillai    | fileHash: ${r4.hash.substring(0,24)}...`);
+    console.log(`5.  Fake Basic C     | Arjun Mehta     | dataHash: ${hash5.substring(0,24)}...`);
+    console.log(`5b. Ghost Partner    | Arjun Mehta     | dataHash: ${hash5b.substring(0,24)}... (collision trigger)`);
+    console.log(`6.  Fake Mint C      | Vikram Nair     | fileHash: ${r6.hash.substring(0,24)}...`);
+    console.log('\n=== Restart the server to reload local_db.json ===');
 }
 
 main().catch(console.error);
