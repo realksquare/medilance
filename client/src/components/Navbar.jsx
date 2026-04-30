@@ -46,35 +46,33 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <button
               onClick={() => setIsDark(!isDark)}
               className="nav-mode-label"
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '10px' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '10px', lineHeight: 1 }}
             >
               {isDark ? 'LANCE MODE: ON' : 'LANCE MODE: OFF'}
             </button>
 
             {user ? (
-              /* Logged-in state */
               <>
-                <Link to={user.isMasterAdmin ? "/admin" : "/profile"} className="nav-link nav-username" style={navLinkStyle}>
+                <Link to={user.isMasterAdmin ? "/admin" : "/profile"} className="nav-link nav-username desktop-links" style={{ ...navLinkStyle, lineHeight: 1 }}>
                   {user.username.toUpperCase()}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="nav-logout-btn"
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '6px 10px', borderRadius: '4px' }}
+                  className="nav-logout-btn desktop-links"
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '6px 10px', borderRadius: '4px', lineHeight: 1 }}
                 >
                   LOGOUT
                 </button>
               </>
             ) : (
-              /* Guest state - hidden on mobile, shown in mobile menu instead */
-              <span className="desktop-links" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <Link to="/login" className="nav-link" style={{ ...navLinkStyle, marginRight: '1.5rem', padding: '10px 0' }}>USER LOGIN</Link>
-                <Link to="/admin" className="nav-link" style={{ ...navLinkStyle, opacity: 0.55, padding: '10px 0' }}>MASTER LOGIN</Link>
-              </span>
+              <>
+                <Link to="/login" className="nav-link desktop-links" style={{ ...navLinkStyle, lineHeight: 1 }}>USER LOGIN</Link>
+                <Link to="/admin" className="nav-link desktop-links" style={{ ...navLinkStyle, opacity: 0.55, lineHeight: 1 }}>MASTER LOGIN</Link>
+              </>
             )}
 
             <button className="mobile-toggle" onClick={toggleMenu} style={{ background: 'none', border: 'none', color: 'var(--text)', padding: '10px', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>
