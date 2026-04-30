@@ -39,11 +39,11 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What are "Ghost Procedures" and how do you catch them?',
-    a: 'A "Ghost Procedure" is when fake medical procedures are billed without actually occurring. MediLance detects this by identifying impossible metadata anomalies—such as a single patient receiving overlapping treatments from completely different clinics simultaneously, or the exact same diagnostic image hash being reused across different providers to claim multiple payouts.',
+    a: 'A "Ghost Procedure" is when fake medical procedures are billed without actually occurring. MediLance detects this by identifying impossible metadata anomalies, such as a single patient receiving overlapping treatments from completely different clinics simultaneously, or the exact same diagnostic image hash being reused across different providers to claim multiple payouts.',
   },
   {
     q: 'What makes this better than existing systems?',
-    a: 'Most hospital record systems are siloed and rely on paper or proprietary portals, leaving massive loopholes for organized insurance fraud. MediLance creates a verifiable, portable proof that cannot be forged. Beyond simple verification, it actively analyzes claim patterns across the network, detecting referral loops and anomalies instantly—saving insurers from paying out millions in systemic fraud.',
+    a: 'Most hospital record systems are siloed and rely on paper or proprietary portals, leaving massive loopholes for organized insurance fraud. MediLance creates a verifiable, portable proof that cannot be forged. Beyond simple verification, it actively analyzes claim patterns across the network, detecting referral loops and anomalies instantly - saving insurers from paying out millions in systemic fraud.',
   },
   {
     q: 'What is the Express Approval system?',
@@ -151,7 +151,7 @@ function AppRoutes() {
           } />
 
           {/* Auth Routes */}
-          <Route path="/login"    element={<GuestOnly><Login /></GuestOnly>} />
+          <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
 
           {/* Protected */}
@@ -160,8 +160,8 @@ function AppRoutes() {
           {/* Public */}
           <Route path="/create" element={<CreateRecord />} />
           <Route path="/verify" element={<VerificationPage />} />
-          <Route path="/bulk"   element={<BulkUpload />} />
-          <Route path="/admin"    element={<AdminDashboard />} />
+          <Route path="/bulk" element={<BulkUpload />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/anomalies" element={<VerifierDashboard />} />
         </Routes>
       </main>

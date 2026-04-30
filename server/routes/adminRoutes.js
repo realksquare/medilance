@@ -29,7 +29,7 @@ router.get('/users', async (req, res) => {
         const db = getDB();
         const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
         if (!admin) return res.status(403).json({ error: 'Admin access required' });
-        const users = await db.collection('users').find({ createdBy: adminUser }).sort({ doj: -1 }).limit(200).toArray();
+        const users = await db.collection('users').find({ isMasterAdmin: { $ne: true } }).sort({ doj: -1 }).limit(200).toArray();
         res.json({ users });
     } catch (err) {
         res.status(500).json({ error: err.message });

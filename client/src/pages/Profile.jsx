@@ -240,8 +240,20 @@ export default function Profile() {
       </Link>
       
       <div className="card flex items-start gap-8">
-        <div className="p-6 bg-primary/5 border border-primary/10 rounded-full text-primary">
-          <User size={48} />
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div className="p-6 bg-primary/5 border border-primary/10 rounded-full text-primary">
+            <User size={48} />
+          </div>
+          {profile?.adminVerified && (
+            <div title="Admin Verified" style={{
+              position: 'absolute', bottom: 2, right: 2,
+              width: 22, height: 22, borderRadius: '50%',
+              background: '#22c55e', border: '2px solid var(--card-bg)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <CheckCircle2 size={13} color="#fff" />
+            </div>
+          )}
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-start">
@@ -260,19 +272,14 @@ export default function Profile() {
             </div>
             
             <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px', padding: '1.5rem' }}>
-              <h3>Email Status</h3>
-              <div className="flex flex-col gap-3">
-                {profile?.emailVerified ? (
-                  <p className="font-bold text-sm text-green-500 flex items-center gap-2">
-                    <CheckCircle2 size={16} /> Verified
+              <h3>Verified Status</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {profile?.adminVerified ? (
+                  <p className="font-bold text-sm" style={{ color: '#22c55e', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                    <CheckCircle2 size={16} /> Admin Verified
                   </p>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <p className="font-bold text-sm text-red-500 m-0">Unverified</p>
-                    <button onClick={sendOtp} disabled={verifying} className="btn btn-outline py-2 px-4 text-[10px] font-bold uppercase tracking-widest w-full">
-                      {verifying ? 'Sending...' : 'Verify Identity'}
-                    </button>
-                  </div>
+                  <p className="font-bold text-sm" style={{ color: 'var(--text-muted)', margin: 0 }}>Pending Verification</p>
                 )}
               </div>
             </div>

@@ -334,8 +334,6 @@ export default function AdminDashboard() {
         {[
           { id: 'users', label: 'User Management', icon: <Users size={14} /> },
           { id: 'analytics', label: 'Provider Analytics', icon: <BarChart2 size={14} /> },
-          { id: 'ghost', label: 'Ghost Filters', icon: <Ghost size={14} />, badge: ghostData?.clusters?.length || null },
-          { id: 'express', label: 'Express Approval', icon: <Zap size={14} />, badge: expressData?.total || null, badgeColor: '#22c55e' },
           { id: 'records', label: 'All Records', icon: <FileText size={14} /> },
           { id: 'settings', label: 'Settings', icon: <Settings size={14} /> },
         ].map(tab => (

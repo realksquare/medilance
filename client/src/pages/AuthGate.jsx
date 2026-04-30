@@ -45,20 +45,7 @@ export default function AuthGate() {
           Create Account
         </Link>
       </div>
-
-      {/* Demo hint */}
-      <div style={{
-        marginTop: '2rem',
-        padding: '0.75rem 1.25rem',
-        borderRadius: '6px',
-        background: 'rgba(37,99,235,0.05)',
-        border: '1px solid rgba(37,99,235,0.12)',
-        fontSize: '0.75rem',
-        color: 'var(--text-muted)',
-      }}>
-        <span style={{ color: 'var(--primary)', fontWeight: 700 }}>DEMO</span>
-        {' '}- Log in as <strong style={{ color: 'var(--text)' }}>demo_admin</strong> for a pre-verified account.
-      </div>
     </div>
+
   );
 }
