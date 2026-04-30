@@ -320,9 +320,6 @@ export default function AdminDashboard() {
           <h1 style={{ fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', marginTop: '0.2rem' }}>{adminUser?.institution || 'Admin Dashboard'}</h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>Logged in as {adminUser?.username}</p>
         </div>
-        <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }} onClick={() => { logout(); setUsers([]); setRecords([]); }}>
-          <LogOut size={14} /> Sign Out
-        </button>
       </div>
 
       {/* Toast */}
