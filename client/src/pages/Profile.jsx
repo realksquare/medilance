@@ -317,7 +317,7 @@ export default function Profile() {
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontWeight: 700, fontSize: '0.85rem' }}>
-                        {label}{action.details?.patientName ? ` — ${action.details.patientName}` : ''}
+                        {label}{action.details?.patientName ? ` - ${action.details.patientName}` : ''}
                       </p>
                       <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
                         <Clock size={11} /> {new Date(action.timestamp).toLocaleString()}
@@ -333,7 +333,7 @@ export default function Profile() {
                       {isSuccess ? 'Success' : 'Failed'}
                     </span>
                     <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', color: 'var(--text-muted)', opacity: 0.55 }}>
-                      {(action.details?.dataHash || action.details?.fileHash || '').substring(0, 10) || '—'}
+                      {(action.details?.dataHash || action.details?.fileHash || '').substring(0, 10) || '-'}
                     </span>
                   </div>
                 </div>

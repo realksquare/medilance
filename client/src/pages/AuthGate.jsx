@@ -57,7 +57,7 @@ export default function AuthGate() {
         color: 'var(--text-muted)',
       }}>
         <span style={{ color: 'var(--primary)', fontWeight: 700 }}>DEMO</span>
-        {' '}— Log in as <strong style={{ color: 'var(--text)' }}>demo_admin</strong> for a pre-verified account.
+        {' '}- Log in as <strong style={{ color: 'var(--text)' }}>demo_admin</strong> for a pre-verified account.
       </div>
     </div>
   );

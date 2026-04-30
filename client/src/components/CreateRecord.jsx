@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import QRCode from 'qrcode';
-import { Download, CheckCircle, AlertCircle, ArrowLeft, Paperclip } from 'lucide-react';
+import { Download, CheckCircle, AlertCircle, ArrowLeft, Paperclip, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API_BASE from '../config';
@@ -20,6 +20,19 @@ export default function CreateRecord() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const canIssue = user && (user.isMasterAdmin || ['issuer', 'dual'].includes(user.role));
+
+  if (!canIssue) {
+    return (
+      <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}>
+        <Shield size={48} color="var(--primary)" style={{ margin: '0 auto 1rem' }} />
+        <h2>Access Denied</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Your role does not permit issuing records. Only Issuers and Dual accounts can access this page.</p>
+        <Link to="/" className="btn mt-4">Go Home</Link>
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

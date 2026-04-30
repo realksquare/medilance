@@ -20,7 +20,7 @@ const STAGE_LABELS = {
   'no-qr': 'No QR',
 };
 
-const STAGE_ICONS = { pass: '✓', fail: '✕', running: null, idle: '–', 'no-qr': '?' };
+const STAGE_ICONS = { pass: '✓', fail: '✕', running: null, idle: '-', 'no-qr': '?' };
 
 function StageRow({ num, title, desc, status }) {
   return (
@@ -136,6 +136,19 @@ export default function VerificationPage() {
   const [loadingLabel, setLoadingLabel] = useState('Verifying');
   const [mintStages, setMintStages] = useState(null);
   const scannerRef = useRef(null);
+
+  const canVerify = user && (user.isMasterAdmin || ['verifier', 'dual'].includes(user.role));
+
+  if (!canVerify) {
+    return (
+      <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}>
+        <Shield size={48} color="var(--primary)" style={{ margin: '0 auto 1rem' }} />
+        <h2>Access Denied</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Your role does not permit verifying records. Only Verifiers and Dual accounts can access this page.</p>
+        <Link to="/" className="btn mt-4">Go Home</Link>
+      </div>
+    );
+  }
 
   useEffect(() => {
     return () => { try { scannerRef.current?.stop().catch(() => { }); } catch { } };

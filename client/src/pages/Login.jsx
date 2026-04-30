@@ -111,7 +111,7 @@ export default function Login() {
           background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)',
           fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center',
         }}>
-          <span style={{ color: 'var(--primary)', fontWeight: 700 }}>DEMO MODE</span> — Use username{' '}
+          <span style={{ color: 'var(--primary)', fontWeight: 700 }}>DEMO MODE</span> - Use username{' '}
           <button
             onClick={() => setForm({ username: 'jury', password: '' })}
             style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem', padding: 0 }}

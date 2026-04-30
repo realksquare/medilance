@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Upload, Download, Table, CheckCircle2, ArrowLeft, Info } from 'lucide-react';
+import { Upload, Download, Table, CheckCircle2, ArrowLeft, Info, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API_BASE from '../config';
@@ -51,6 +51,19 @@ export default function BulkUpload() {
   const [parsedData, setParsedData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState(null);
+
+  const canIssue = user && (user.isMasterAdmin || ['issuer', 'dual'].includes(user.role));
+
+  if (!canIssue) {
+    return (
+      <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}>
+        <Shield size={48} color="var(--primary)" style={{ margin: '0 auto 1rem' }} />
+        <h2>Access Denied</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Your role does not permit bulk issuing. Only Issuers and Dual accounts can access this page.</p>
+        <Link to="/" className="btn mt-4">Go Home</Link>
+      </div>
+    );
+  }
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];

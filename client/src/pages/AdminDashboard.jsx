@@ -632,7 +632,7 @@ export default function AdminDashboard() {
                 <Ghost size={18} color="#8b5cf6" /> Ghost Procedure Filters
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                Statistically improbable billing patterns flagged per patient — duplicate scans, incompatible same-day combos, multi-issuer networks.
+                Statistically improbable billing patterns flagged per patient - duplicate scans, incompatible same-day combos, multi-issuer networks.
               </p>
             </div>
             <button className="btn btn-outline" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -797,8 +797,8 @@ export default function AdminDashboard() {
           {!expressLoading && expressData?.approved?.map((rec, i) => {
             const tierStyles = {
               PLATINUM: { bg: 'rgba(168,85,247,0.07)', border: 'rgba(168,85,247,0.3)', color: '#a855f7', label: 'Platinum', scoreBg: '#a855f7' },
-              GOLD:     { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.3)',  color: '#f59e0b', label: 'Gold',     scoreBg: '#f59e0b' },
-              FAST:     { bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.3)',  color: '#3b82f6', label: 'Fast-Track', scoreBg: '#3b82f6' },
+              GOLD: { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.3)', color: '#f59e0b', label: 'Gold', scoreBg: '#f59e0b' },
+              FAST: { bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.3)', color: '#3b82f6', label: 'Fast-Track', scoreBg: '#3b82f6' },
             };
             const ts = tierStyles[rec.approvalTier] || tierStyles.FAST;
             const isExpanded = expandedExpress === i;
