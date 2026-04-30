@@ -50,30 +50,30 @@ export default function Navbar() {
             <button
               onClick={() => setIsDark(!isDark)}
               className="nav-mode-label"
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '10px' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '10px', lineHeight: 1 }}
             >
               {isDark ? 'LANCE MODE: ON' : 'LANCE MODE: OFF'}
             </button>
 
             {user ? (
               /* Logged-in state */
-              <>
-                <Link to={user.isMasterAdmin ? "/admin" : "/profile"} className="nav-link nav-username" style={navLinkStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <Link to={user.isMasterAdmin ? "/admin" : "/profile"} className="nav-link nav-username" style={{ ...navLinkStyle, lineHeight: 1 }}>
                   {user.username.toUpperCase()}
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="nav-logout-btn"
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '6px 10px', borderRadius: '4px' }}
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer', padding: '6px 10px', borderRadius: '4px', lineHeight: 1 }}
                 >
                   LOGOUT
                 </button>
-              </>
+              </div>
             ) : (
               /* Guest state - hidden on mobile, shown in mobile menu instead */
-              <span className="desktop-links">
-                <Link to="/login" className="nav-link" style={{ ...navLinkStyle, marginRight: '1.5rem' }}>USER LOGIN</Link>
-                <Link to="/admin" className="nav-link" style={{ ...navLinkStyle, opacity: 0.55 }}>MASTER LOGIN</Link>
+              <span className="desktop-links" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <Link to="/login" className="nav-link" style={{ ...navLinkStyle, lineHeight: 1 }}>USER LOGIN</Link>
+                <Link to="/admin" className="nav-link" style={{ ...navLinkStyle, opacity: 0.55, lineHeight: 1 }}>MASTER LOGIN</Link>
               </span>
             )}
 
