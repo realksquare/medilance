@@ -50,7 +50,10 @@ export default function Profile() {
     const uname = currentUsername || username;
     if (!uname || uname === 'undefined' || uname === ':username') return;
     try {
-      const res = await fetch(`${API_BASE}/api/users/${uname}`);
+      const cred = sessionStorage.getItem('medilance_cred') || '';
+      const res = await fetch(`${API_BASE}/api/users/${uname}`, {
+        headers: { 'x-password': cred },
+      });
       if (!res.ok) return; // 404 = Local Mode or new user, keep cached profile
       const data = await res.json();
       localStorage.setItem('profile', JSON.stringify(data.user));

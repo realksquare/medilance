@@ -8,13 +8,15 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const login = useCallback((userData) => {
+  const login = useCallback((userData, password) => {
     localStorage.setItem('medilance_user', JSON.stringify(userData));
+    if (password) sessionStorage.setItem('medilance_cred', password);
     setUser(userData);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('medilance_user');
+    sessionStorage.removeItem('medilance_cred');
     setUser(null);
   }, []);
 

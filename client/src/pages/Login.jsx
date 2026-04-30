@@ -34,7 +34,7 @@ export default function Login() {
         return;
       }
       const data = await res.json();
-      login(data.user);
+      login(data.user, form.password);
       navigate('/profile');
     } catch {
       setStatus('Cannot reach server. Please try again later.');
