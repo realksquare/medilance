@@ -72,7 +72,7 @@ export default function Navbar() {
             ) : (
               /* Guest state - hidden on mobile, shown in mobile menu instead */
               <span className="desktop-links">
-                <Link to="/login" className="nav-link" style={navLinkStyle}>USER LOGIN</Link>
+                <Link to="/login" className="nav-link" style={{ ...navLinkStyle, marginRight: '1.5rem' }}>USER LOGIN</Link>
                 <Link to="/admin" className="nav-link" style={{ ...navLinkStyle, opacity: 0.55 }}>MASTER LOGIN</Link>
               </span>
             )}
