@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_BASE from '../config';
 
 const API = `${API_BASE}/api`;
 
-const ROLES = ['Doctor', 'Nurse', 'Administrator', 'Researcher', 'Patient', 'Insurance Agent', 'Lab Technician'];
+const ROLES = [
+  { value: 'issuer', label: 'Issuer - Issue and anchor records' },
+  { value: 'verifier', label: 'Verifier - Verify and inspect claims' },
+  { value: 'dual', label: 'Dual - Both issue and verify claims' },
+];
 const TYPES = ['hospital', 'clinic', 'laboratory', 'insurance', 'individual'];
 
 export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', fullName: '', email: '', institution: '', role: '', type: 'hospital' });
+  const [form, setForm] = useState({
+    username: '',
+    fullName: '',
+    email: '',
+    institution: '',
+    role: 'issuer',
+    type: 'hospital',
+    password: '',
+  });
   const [status, setStatus] = useState({ type: '', msg: '' });
   const [loading, setLoading] = useState(false);
 
@@ -19,13 +32,17 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { username, fullName, email, role, type } = form;
-    if (!username || !fullName || !email || !role) {
-      setStatus({ type: 'error', msg: 'All fields are required.' });
+    const { username, fullName, email, role, type, password, institution } = form;
+    if (!username || !fullName || !email || !role || !password) {
+      setStatus({ type: 'error', msg: 'All required fields must be completed.' });
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setStatus({ type: 'error', msg: 'Enter a valid email address.' });
+    if (password.length < 6) {
+      setStatus({ type: 'error', msg: 'Password must be at least 6 characters long.' });
+      return;
+    }
+    if (!/^[^s@]+@[^s@]+.[^s@]+$/.test(email)) {
+      setStatus({ type: 'error', msg: 'Please enter a valid email address.' });
       return;
     }
 
@@ -33,29 +50,29 @@ export default function Register() {
     setStatus({ type: '', msg: '' });
 
     try {
-      // Check if username already exists
-      const check = await fetch(`${API}/users/${username}`);
-      if (check.ok) {
-        setStatus({ type: 'error', msg: 'Username already taken. Try a different one or log in.' });
-        setLoading(false);
-        return;
-      }
-
-      // Create profile
       const res = await fetch(`${API}/users/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, fullName, email, institution: form.institution, role, type }),
+        body: JSON.stringify({
+          username,
+          fullName,
+          email,
+          institution,
+          role,
+          type,
+          password,
+        }),
       });
 
-      if (!res.ok) throw new Error('Registration failed');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed.');
 
-      setStatus({ type: 'success', msg: 'Account created! Redirecting to your identity...' });
-      login({ username, fullName, emailVerified: false });
+      setStatus({ type: 'success', msg: 'Account created! Redirecting to profile...' });
+      login(data.user, data.token);
 
-      setTimeout(() => navigate('/profile'), 1200);
-    } catch {
-      setStatus({ type: 'error', msg: 'Cannot reach server. Please try again later.' });
+      setTimeout(() => navigate('/profile'), 1000);
+    } catch (err) {
+      setStatus({ type: 'error', msg: err.message || 'Cannot reach server. Please try again later.' });
     } finally {
       setLoading(false);
     }
@@ -64,7 +81,6 @@ export default function Register() {
   return (
     <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem 1.5rem' }}>
       <div style={{ width: '100%', maxWidth: '520px' }}>
-        {/* Header */}
         <div style={{ marginBottom: '2.5rem' }}>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', color: 'var(--primary)', textTransform: 'uppercase' }}>
             MediLance Protocol
@@ -77,13 +93,11 @@ export default function Register() {
           </p>
         </div>
 
-        {/* Card */}
         <div className="card" style={{ padding: '2rem' }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {/* Row 1 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
-                <label htmlFor="reg-username">Username</label>
+                <label htmlFor="reg-username">Username *</label>
                 <input
                   id="reg-username"
                   type="text"
@@ -91,33 +105,47 @@ export default function Register() {
                   value={form.username}
                   onChange={e => set('username', e.target.value.toLowerCase().replace(/\s/g, '_'))}
                   autoFocus
+                  required
                 />
               </div>
               <div>
-                <label htmlFor="reg-fullname">Full Name</label>
+                <label htmlFor="reg-fullname">Full Name *</label>
                 <input
                   id="reg-fullname"
                   type="text"
                   placeholder="Dr. Jane Smith"
                   value={form.fullName}
                   onChange={e => set('fullName', e.target.value)}
+                  required
                 />
               </div>
             </div>
 
-            {/* Row 2 */}
             <div>
-              <label htmlFor="reg-email">Email Address</label>
+              <label htmlFor="reg-email">Email Address *</label>
               <input
                 id="reg-email"
                 type="email"
                 placeholder="you@institution.org"
                 value={form.email}
                 onChange={e => set('email', e.target.value)}
+                required
               />
             </div>
 
-            {/* Row 3: Institution */}
+            <div>
+              <label htmlFor="reg-password">Password (min 6 chars) *</label>
+              <input
+                id="reg-password"
+                type="password"
+                placeholder="Choose a strong password"
+                value={form.password}
+                onChange={e => set('password', e.target.value)}
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
             <div>
               <label htmlFor="reg-institution">Institution / Clinic Name</label>
               <input
@@ -129,13 +157,11 @@ export default function Register() {
               />
             </div>
 
-            {/* Row 4 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
-                <label htmlFor="reg-role">Role</label>
+                <label htmlFor="reg-role">Access Role *</label>
                 <select id="reg-role" value={form.role} onChange={e => set('role', e.target.value)}>
-                  <option value="">Select role...</option>
-                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
               </div>
               <div>
@@ -146,7 +172,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Status */}
             {status.msg && (
               <div style={{
                 padding: '0.75rem 1rem',
@@ -161,8 +186,8 @@ export default function Register() {
               </div>
             )}
 
-            <button type="submit" className="btn" disabled={loading} style={{ width: '100%', marginTop: '0.25rem' }}>
-              {loading ? 'Creating Account...' : 'Create Identity →'}
+            <button type="submit" className="btn" disabled={loading} style={{ width: '100%', marginTop: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              {loading ? 'Creating Account...' : <><span>Create Identity</span><ArrowRight size={16} /></>}
             </button>
           </form>
         </div>

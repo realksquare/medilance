@@ -46,7 +46,7 @@ function downloadTemplate() {
 }
 
 export default function BulkUpload() {
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
   const [csvFile, setCsvFile] = useState(null);
   const [parsedData, setParsedData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);

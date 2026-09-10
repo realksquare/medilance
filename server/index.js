@@ -1,10 +1,7 @@
-// ── Crash Guard (MUST be first) ─────────────────────────────────────────────
-// The MongoDB Atlas driver emits background DNS/SRV errors on restricted networks
-// that would otherwise kill the process. We intercept and suppress them here.
 process.on('unhandledRejection', (reason) => {
     const msg = String(reason?.message || reason);
     if (msg.includes('querySrv') || msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND') || msg.includes('mongodb')) {
-        console.warn('[GUARD] Suppressed MongoDB background error:', msg.split('\n')[0]);
+        console.warn('[GUARD] Suppressed background error:', msg.split('\n')[0]);
         return;
     }
     console.error('[UNHANDLED REJECTION]', reason);
@@ -12,12 +9,11 @@ process.on('unhandledRejection', (reason) => {
 process.on('uncaughtException', (err) => {
     const msg = String(err?.message || err);
     if (msg.includes('querySrv') || msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND') || msg.includes('mongodb')) {
-        console.warn('[GUARD] Suppressed MongoDB background crash:', msg.split('\n')[0]);
+        console.warn('[GUARD] Suppressed background crash:', msg.split('\n')[0]);
         return;
     }
     console.error('[UNCAUGHT EXCEPTION] (Process Kept Alive):', err);
 });
-// ─────────────────────────────────────────────────────────────────────────────
 
 require('dotenv').config();
 const express = require('express');
@@ -25,8 +21,12 @@ const crypto = require('crypto');
 const cors = require('cors');
 const multer = require('multer');
 const sharp = require('sharp');
+const bcrypt = require('bcryptjs');
+
 const { connectToDB, getDB } = require('./db');
 const { computeRiskScore } = require('./fraud');
+const { verifyToken, requireRole } = require('./utils/authMiddleware');
+
 const userRoutes      = require('./routes/userRoutes');
 const adminRoutes     = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
@@ -39,79 +39,64 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors());
 app.use(express.json());
 
-// Health Check (Very top to avoid ANY hangs)
-app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'MediLance' }));
+// Health Check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'MediLance 2.0' }));
 
 // Action Logger Helper
 async function logAction(username, actionType, status, details) {
     try {
         const db = getDB();
         await db.collection('actions').insertOne({
-            username,
-            actionType, // 'issued', 'verified', 'bulk_issued'
-            status, // 'success', 'failed'
+            username: username || 'guest',
+            actionType,
+            status,
             details,
             timestamp: new Date()
         });
     } catch (e) {
-        console.error("Logging failed", e);
+        console.error('Action logging failed:', e.message);
     }
 }
 
-
-// DB connection middleware — must run before any route that calls getDB()
+// Database Connection Middleware
 app.use(async (req, res, next) => {
     try {
         await connectToDB();
         next();
     } catch (error) {
-        console.error("DB Middleware Error:", error);
-        res.status(500).json({ error: 'Database connection failed' });
+        console.error('DB Connection Error:', error);
+        res.status(500).json({ error: 'Database service unavailable' });
     }
 });
+
+// Attach Token Verification across all routes
+app.use(verifyToken);
 
 app.use('/api/users',     userRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/verifier',  verifierRoutes);
 
-// Protocol Guard Middleware
-const requireRegisteredUser = async (req, res, next) => {
-    const username = req.headers['x-username'];
-    if (!username || username === 'guest') {
-        return res.status(403).json({ error: 'Registration required for this action' });
-    }
-    const db = getDB();
-    const user = await db.collection('users').findOne({ username });
-    if (!user) return res.status(403).json({ error: 'Valid registration required' });
-    next();
-};
-
-// Verification Rate Limiter
-const verificationStore = {}; // Memory store for daily guest counts
+// Rate Limiter for Guest Verifications (5 per day per IP)
+const verificationStore = {};
 const checkVerificationLimit = async (req, res, next) => {
-    const username = req.headers['x-username'];
-    if (username && username !== 'guest') {
-        const db = getDB();
-        const user = await db.collection('users').findOne({ username });
-        if (user) return next(); // Unlimited for registered
+    if (req.user && req.user.username && req.user.username !== 'guest') {
+        return next();
     }
 
-    // Guest Limiting
-    const ip = req.ip;
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const today = new Date().toISOString().split('T')[0];
     const key = `${ip}_${today}`;
-    
+
     if (!verificationStore[key]) verificationStore[key] = 0;
-    if (verificationStore[key] >= 5) {
-        return res.status(429).json({ error: 'Daily guest limit (5) reached. Please register for unlimited access.' });
+    if (verificationStore[key] >= 10) {
+        return res.status(429).json({ error: 'Daily guest verification limit reached. Please log in for unlimited checks.' });
     }
-    
+
     verificationStore[key]++;
     next();
 };
 
-// Helper Functions
 function createStableHash(data) {
     const sortObject = (obj) => {
         if (typeof obj !== 'object' || obj === null) return obj;
@@ -125,24 +110,18 @@ function createStableHash(data) {
 
 async function hashFileBuffer(buffer, mimetype) {
     if (mimetype === 'image/jpeg' || mimetype === 'image/png' || mimetype === 'image/webp') {
-        // Normalize: strip EXIF, convert to greyscale, resize to fixed width.
-        // This makes casual phone photos (glare, rotation, compression) hash
-        // identically to the source as long as the visual content is intact.
         const normalized = await sharp(buffer)
-            .rotate()                          // auto-rotate from EXIF orientation
+            .rotate()
             .resize({ width: 1200, withoutEnlargement: true })
             .grayscale()
-            .normalise()                       // stretch contrast to 0-255
-            .withMetadata(false)               // strip all EXIF/GPS metadata
-            .png({ compressionLevel: 0 })      // lossless output for stable bytes
+            .normalise()
+            .withMetadata(false)
+            .png({ compressionLevel: 0 })
             .toBuffer();
         return crypto.createHash('sha256').update(normalized).digest('hex');
     }
-    // PDFs and other files: hash the raw buffer as-is
     return crypto.createHash('sha256').update(buffer).digest('hex');
 }
-
-// Routes
 
 async function getVerificationHistory(hash, db) {
     const allActions = await db.collection('actions').find({ actionType: 'verified', status: 'success' }).sort({ timestamp: 1 }).limit(5000).toArray();
@@ -171,12 +150,12 @@ async function getVerificationHistory(hash, db) {
     };
 }
 
-// Basic Record Creation (QR Data)
-app.post('/api/create-record', requireRegisteredUser, async (req, res) => {
+// Basic Record Creation (Protected: Issuer or Dual)
+app.post('/api/create-record', requireRole(['issuer', 'dual']), async (req, res) => {
     try {
-        const username = req.headers['x-username'] || 'guest';
+        const username = req.user.username;
         const { recordData } = req.body;
-        if (!recordData) return res.status(400).json({ error: 'Record data is required' });
+        if (!recordData) return res.status(400).json({ error: 'Record data is required.' });
 
         const dataHash = createStableHash(recordData);
         const db = getDB();
@@ -184,7 +163,7 @@ app.post('/api/create-record', requireRegisteredUser, async (req, res) => {
         const existing = await db.collection('medical_records').findOne({ dataHash });
         if (existing) {
             await logAction(username, 'issued', 'failed', { dataHash, reason: 'duplicate' });
-            return res.status(409).json({ error: 'Record already exists', dataHash });
+            return res.status(409).json({ error: 'Identical record is already registered on the network.', dataHash });
         }
 
         const issuer = await db.collection('users').findOne({ username });
@@ -192,19 +171,27 @@ app.post('/api/create-record', requireRegisteredUser, async (req, res) => {
             ? { fullName: issuer.fullName, role: issuer.role, type: issuer.type, institution: issuer.institution || '' }
             : null;
 
-        await db.collection('medical_records').insertOne({ ...recordData, dataHash, mode: 'basic', issuerUsername: username, issuerProfile, createdAt: new Date() });
+        await db.collection('medical_records').insertOne({
+            ...recordData,
+            dataHash,
+            mode: 'basic',
+            issuerUsername: username,
+            issuerProfile,
+            createdAt: new Date()
+        });
+
         await logAction(username, 'issued', 'success', { dataHash, patientName: recordData.patientName });
-        res.status(201).json({ message: 'Record created', dataHash });
+        res.status(201).json({ message: 'Record created successfully.', dataHash });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Mint Record Creation (File Integrity)
-app.post('/api/create-record-file', requireRegisteredUser, upload.single('file'), async (req, res) => {
+// Mint Record Creation (Protected: Issuer or Dual)
+app.post('/api/create-record-file', requireRole(['issuer', 'dual']), upload.single('file'), async (req, res) => {
     try {
-        const username = req.headers['x-username'] || 'guest';
-        if (!req.file || !req.body.recordData) return res.status(400).json({ error: 'File and data are required' });
+        const username = req.user.username;
+        if (!req.file || !req.body.recordData) return res.status(400).json({ error: 'File and record metadata are required.' });
 
         const parsedData = JSON.parse(req.body.recordData);
         const fileHash = await hashFileBuffer(req.file.buffer, req.file.mimetype);
@@ -213,7 +200,7 @@ app.post('/api/create-record-file', requireRegisteredUser, upload.single('file')
         const existing = await db.collection('medical_records').findOne({ fileHash });
         if (existing) {
             await logAction(username, 'mint_issued', 'failed', { fileHash, reason: 'duplicate' });
-            return res.status(409).json({ error: 'File already registered', dataHash: fileHash });
+            return res.status(409).json({ error: 'Document file is already registered on the network.', dataHash: fileHash });
         }
 
         const issuer = await db.collection('users').findOne({ username });
@@ -221,19 +208,29 @@ app.post('/api/create-record-file', requireRegisteredUser, upload.single('file')
             ? { fullName: issuer.fullName, role: issuer.role, type: issuer.type, institution: issuer.institution || '' }
             : null;
 
-        await db.collection('medical_records').insertOne({ ...parsedData, fileHash, mode: 'mint', issuerUsername: username, issuerProfile, createdAt: new Date() });
+        await db.collection('medical_records').insertOne({
+            ...parsedData,
+            fileHash,
+            mode: 'mint',
+            issuerUsername: username,
+            issuerProfile,
+            createdAt: new Date()
+        });
+
         await logAction(username, 'mint_issued', 'success', { fileHash, patientName: parsedData.patientName });
-        res.status(201).json({ message: 'Mint record created', dataHash: fileHash });
+        res.status(201).json({ message: 'Mint record registered successfully.', dataHash: fileHash });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Verification Endpoints
+// Verification Endpoints (Accessible to public guests & verifiers)
 app.post('/api/verify-record', checkVerificationLimit, async (req, res) => {
     try {
-        const username = req.headers['x-username'] || 'guest';
+        const username = req.user?.username || 'guest';
         const { dataHash } = req.body;
+        if (!dataHash) return res.status(400).json({ error: 'Verification hash is required.' });
+
         const db = getDB();
         const found = await db.collection('medical_records').findOne({ dataHash });
 
@@ -245,7 +242,7 @@ app.post('/api/verify-record', checkVerificationLimit, async (req, res) => {
             res.json({ verified: true, record: details, mode, fraud, verificationHistory });
         } else {
             await logAction(username, 'verified', 'failed', { dataHash });
-            res.status(404).json({ verified: false, error: 'Record not found' });
+            res.status(404).json({ verified: false, error: 'Record not found or unverified hash.' });
         }
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -254,8 +251,9 @@ app.post('/api/verify-record', checkVerificationLimit, async (req, res) => {
 
 app.post('/api/verify-file', checkVerificationLimit, upload.single('file'), async (req, res) => {
     try {
-        const username = req.headers['x-username'] || 'guest';
-        if (!req.file) return res.status(400).json({ error: 'File is required' });
+        const username = req.user?.username || 'guest';
+        if (!req.file) return res.status(400).json({ error: 'File upload is required.' });
+
         const fileHash = await hashFileBuffer(req.file.buffer, req.file.mimetype);
         const db = getDB();
         const found = await db.collection('medical_records').findOne({ fileHash, mode: 'mint' });
@@ -267,21 +265,20 @@ app.post('/api/verify-file', checkVerificationLimit, upload.single('file'), asyn
             const verificationHistory = await getVerificationHistory(fileHash, db);
             res.json({ verified: true, record: details, fraud, verificationHistory });
         } else {
-            res.status(404).json({ verified: false, error: 'Tampered or unregistered file' });
+            res.status(404).json({ verified: false, error: 'Document was altered or not registered on network.' });
         }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// On-demand risk score by hash
 app.get('/api/risk-score/:hash', async (req, res) => {
     try {
         const { hash } = req.params;
         const db = getDB();
         const found = (await db.collection('medical_records').findOne({ dataHash: hash })) ||
                       (await db.collection('medical_records').findOne({ fileHash: hash }));
-        if (!found) return res.status(404).json({ error: 'Record not found' });
+        if (!found) return res.status(404).json({ error: 'Record not found.' });
         const fraud = await computeRiskScore(found, db);
         res.json({ hash, fraud });
     } catch (error) {
@@ -289,11 +286,10 @@ app.get('/api/risk-score/:hash', async (req, res) => {
     }
 });
 
-// Bulk Verification (Mint only — verifies multiple files at once)
 const uploadMany = multer({ storage: multer.memoryStorage() });
 app.post('/api/bulk-verify-mint', checkVerificationLimit, uploadMany.array('files', 20), async (req, res) => {
     try {
-        if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No files provided' });
+        if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No files provided for bulk verification.' });
         const db = getDB();
         const results = [];
         for (const f of req.files) {
@@ -312,29 +308,35 @@ app.post('/api/bulk-verify-mint', checkVerificationLimit, uploadMany.array('file
     }
 });
 
-// Bulk Creation
-app.post('/api/bulk-create', requireRegisteredUser, async (req, res) => {
+// Bulk Record Creation (Protected)
+app.post('/api/bulk-create', requireRole(['issuer', 'dual']), async (req, res) => {
     try {
         const { records } = req.body;
-        if (!Array.isArray(records)) return res.status(400).json({ error: 'Array of records expected' });
-        
+        if (!Array.isArray(records)) return res.status(400).json({ error: 'Array of records expected.' });
+
         const db = getDB();
         const results = [];
-        const username = req.headers['x-username'] || 'guest';
-        
+        const username = req.user.username;
+
         for (const record of records) {
             const dataHash = createStableHash(record);
             const exists = await db.collection('medical_records').findOne({ dataHash });
             if (!exists) {
-                await db.collection('medical_records').insertOne({ ...record, dataHash, mode: 'basic', createdAt: new Date() });
+                await db.collection('medical_records').insertOne({
+                    ...record,
+                    dataHash,
+                    mode: 'basic',
+                    issuerUsername: username,
+                    createdAt: new Date()
+                });
                 results.push({ ...record, dataHash, status: 'created' });
             } else {
                 results.push({ ...record, dataHash, status: 'exists' });
             }
         }
-        
+
         await logAction(username, 'bulk_issued', 'success', { count: results.length });
-        res.json({ message: 'Bulk processing complete', results });
+        res.json({ message: 'Bulk processing completed.', results });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -346,7 +348,7 @@ async function seedMasterAdmin() {
     const db = getDB();
     const existing = await db.collection('users').findOne({ isMasterAdmin: true });
     if (!existing) {
-        const passwordHash = crypto.createHash('sha256').update(adminPass).digest('hex');
+        const passwordHash = await bcrypt.hash(adminPass, 10);
         await db.collection('users').insertOne({
             username: adminUser,
             fullName: 'MediLance Master Admin',
@@ -370,6 +372,6 @@ app.listen(PORT, async () => {
         await connectToDB();
         await seedMasterAdmin();
     } catch (e) {
-        console.error("Initial DB connection failed:", e.message);
+        console.error('Initial DB connection failed:', e.message);
     }
 });

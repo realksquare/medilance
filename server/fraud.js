@@ -1,12 +1,12 @@
 /**
- * fraud.js — MediLance Phase 2: Fraud Intelligence Engine
+ * fraud.js - MediLance Fraud Intelligence Engine
  *
- * computeRiskScore(record, db) → { score: 0-100, grade, flags }
+ * computeRiskScore(record, db) -> { score: 0-100, grade, flags }
  *
  * Score starts at 100 (clean). Each flag deducts points.
- * Grade:  A (90-100) | B (75-89) | C (55-74) | D (<55)
+ * Grade: A (90-100) | B (75-89) | C (55-74) | D (<55)
  *
- * Signals implemented:
+ * 7 Signals:
  *  1. Cross-issuer duplicate hash              (-50)
  *  2. Same register number, diff issuers       (-35)
  *  3. Same patient name+DOB, diff issuers      (-25)
@@ -16,31 +16,31 @@
  *  7. Simultaneous billing collision (same day)(-40)
  */
 
-// ── Billing Baselines (INR) ───────────────────────────────────────────────────
-// Median claim amounts per record type, derived from IRDAI public data and
-// industry benchmarks for the Indian health insurance market.
-// Sources:
-//   IRDAI Annual Report 2022-23 (https://irdai.gov.in)
-//   NHA Health Accounts Report 2021-22 (https://nhsrcindia.org)
-const BILLING_BASELINES = {
-    'Lab Report':    { avg: 2500,  label: 'Lab / Diagnostic' },
-    'Prescription':  { avg: 1200,  label: 'Prescription / Medication' },
-    'Discharge':     { avg: 55000, label: 'Inpatient Discharge' },
-};
+const { BILLING_BASELINES } = require('./config/baselines');
 
 async function computeRiskScore(record, db) {
     const flags = [];
     let deduction = 0;
 
-    const allRecords = await db.collection('medical_records').find({}).sort({}).limit(5000).toArray();
+    // Build targeted query conditions to avoid scanning 5,000 irrelevant records
+    const orConditions = [];
+    if (record.dataHash) orConditions.push({ dataHash: record.dataHash });
+    if (record.fileHash) orConditions.push({ fileHash: record.fileHash });
+    if (record.registerNumber) orConditions.push({ registerNumber: record.registerNumber });
+    if (record.patientName) orConditions.push({ patientName: record.patientName });
+    if (record.issueDate) orConditions.push({ issueDate: record.issueDate });
 
-    // ── Signal 1: Same hash issued by multiple distinct issuers ──────────────
-    // A hash that appears under two different usernames means the same
-    // cryptographic fingerprint was registered by two separate parties —
-    // a strong indicator that one of them is forging provenance.
-    const matchingHash = allRecords.filter(r =>
-        (r.dataHash && r.dataHash === record.dataHash) ||
-        (r.fileHash && r.fileHash === record.fileHash)
+    let candidateRecords = [];
+    if (orConditions.length > 0) {
+        candidateRecords = await db.collection('medical_records').find({ $or: orConditions }).limit(1000).toArray();
+    } else {
+        candidateRecords = await db.collection('medical_records').find({}).limit(500).toArray();
+    }
+
+    // Signal 1: Cross-issuer duplicate hash
+    const matchingHash = candidateRecords.filter(r =>
+        (record.dataHash && (r.dataHash === record.dataHash || r.fileHash === record.dataHash)) ||
+        (record.fileHash && (r.fileHash === record.fileHash || r.dataHash === record.fileHash))
     );
     const hashIssuers = [...new Set(matchingHash.map(r => r.issuerUsername).filter(Boolean))];
     if (hashIssuers.length > 1) {
@@ -56,11 +56,9 @@ async function computeRiskScore(record, db) {
         deduction += 50;
     }
 
-    // ── Signal 2: Same register number, different issuer ────────────────────
-    // A patient register number appearing under two institutions strongly
-    // suggests a duplicate or ghost claim.
+    // Signal 2: Same register number, different issuer
     if (record.registerNumber) {
-        const sameReg = allRecords.filter(r =>
+        const sameReg = candidateRecords.filter(r =>
             r.registerNumber === record.registerNumber &&
             r.issuerUsername && record.issuerUsername &&
             r.issuerUsername !== record.issuerUsername
@@ -80,12 +78,10 @@ async function computeRiskScore(record, db) {
         }
     }
 
-    // ── Signal 3: Same patient name + DOB, different issuers ────────────────
-    // Soft identity collision — same person being claimed by multiple
-    // providers at the same time is a collision alert precursor.
+    // Signal 3: Same patient name + DOB, different issuers
     if (record.patientName && record.dob) {
         const nameNorm = record.patientName.trim().toLowerCase();
-        const collision = allRecords.filter(r =>
+        const collision = candidateRecords.filter(r =>
             r.patientName &&
             r.dob === record.dob &&
             r.patientName.trim().toLowerCase() === nameNorm &&
@@ -107,17 +103,14 @@ async function computeRiskScore(record, db) {
         }
     }
 
-    // ── Signal 4: Unusually high verification frequency ─────────────────────
-    // A record being verified many times in a short window can indicate
-    // automated submission attempts by fraudulent actors.
+    // Signal 4: High verification frequency (velocity)
     if (record.dataHash || record.fileHash) {
         const hash = record.dataHash || record.fileHash;
-        const allActions = await db.collection('actions').find({}).sort({}).limit(5000).toArray();
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const allActions = await db.collection('actions').find({ actionType: 'verified' }).limit(500).toArray();
         const recentVerifications = allActions.filter(a =>
-            a.actionType === 'verified' &&
-            a.details?.dataHash === hash &&
-            a.timestamp &&
-            (Date.now() - new Date(a.timestamp).getTime()) < 60 * 60 * 1000 // last hour
+            (a.details?.dataHash === hash || a.details?.fileHash === hash) &&
+            a.timestamp && new Date(a.timestamp) >= oneHourAgo
         );
         if (recentVerifications.length >= 5) {
             flags.push({
@@ -129,9 +122,7 @@ async function computeRiskScore(record, db) {
         }
     }
 
-    // ── Signal 5: Missing critical identity fields ───────────────────────────
-    // Records with blank mandatory fields may have been created to obscure
-    // patient identity — a common technique in ghost billing.
+    // Signal 5: Missing critical identity fields
     const criticalFields = ['registerNumber', 'dob', 'doctorName'];
     let missingPenalty = 0;
     for (const field of criticalFields) {
@@ -139,17 +130,14 @@ async function computeRiskScore(record, db) {
             flags.push({
                 type: 'MISSING_FIELD',
                 severity: 'low',
-                message: `Field "${field}" is empty. Incomplete records are a weak-identity risk.`,
+                message: `Field "${field}" is empty. Incomplete records present identity verification risk.`,
             });
             missingPenalty = Math.min(missingPenalty + 5, 15);
         }
     }
     deduction += missingPenalty;
 
-    // ── Signal 6: Billing Anomaly ────────────────────────────────────────────
-    // Compare the claimed amount against known procedure averages.
-    // A claim 2.5x above the baseline is a strong inflation indicator.
-    // A claim 1.5x–2.5x above baseline is flagged as a moderate anomaly.
+    // Signal 6: Billing Anomaly vs benchmark
     const medCosts = parseFloat(record.medCosts);
     const baseline = BILLING_BASELINES[record.recordType];
     if (baseline && !isNaN(medCosts) && medCosts > 0) {
@@ -171,22 +159,15 @@ async function computeRiskScore(record, db) {
         }
     }
 
-    // ── Signal 7: Simultaneous Billing Collision ─────────────────────────────
-    // The most explicit ghost-procedure pattern: the same patient appearing
-    // in records from two DIFFERENT issuers on the EXACT SAME calendar date.
-    // Signals 2 and 3 catch cross-issuer duplicates at any point in time;
-    // this signal specifically catches same-day simultaneous billing —
-    // a strong indicator of a fabricated or cloned claim.
+    // Signal 7: Simultaneous Billing Collision (same calendar date)
     if (record.issueDate && record.issuerUsername) {
         const nameNorm = record.patientName ? record.patientName.trim().toLowerCase() : null;
-        const sameDayOther = allRecords.filter(r =>
+        const sameDayOther = candidateRecords.filter(r =>
             r.issuerUsername &&
             r.issuerUsername !== record.issuerUsername &&
             r.issueDate === record.issueDate &&
             (
-                // Match by register number (strongest identity anchor)
                 (record.registerNumber && r.registerNumber && r.registerNumber === record.registerNumber) ||
-                // OR match by name + DOB (soft identity anchor)
                 (nameNorm && r.patientName && record.dob &&
                     r.dob === record.dob &&
                     r.patientName.trim().toLowerCase() === nameNorm)

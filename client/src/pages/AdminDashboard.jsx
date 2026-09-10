@@ -47,7 +47,7 @@ function fmtDate(iso) {
 }
 
 export default function AdminDashboard() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, getAuthHeaders } = useAuth();
   const adminUser = user?.isMasterAdmin ? user : null;
   const phase = adminUser ? 'dash' : 'login';
 
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
   const fetchUsers = async (uname) => {
     setLoadingUsers(true);
     try {
-      const res = await fetch(`${API}/users`, { headers: { 'x-admin-user': uname } });
+      const res = await fetch(`${API}/users`, { headers: getAuthHeaders() });
       const data = await res.json();
       setUsers(data.users || []);
     } catch { setUsers([]); }
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
       const ids = Array.from(selectedRecords);
       await fetch(`${API}/records/delete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-user': adminUser.username },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ ids }),
       });
       toast(`${selectedRecords.size} records deleted.`);
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
   const deleteUser = async (username) => {
     if (!window.confirm(`Remove "${username}"? This cannot be undone.`)) return;
     try {
-      await fetch(`${API}/user/${username}`, { method: 'DELETE', headers: { 'x-admin-user': adminUser.username } });
+      await fetch(`${API}/user/${username}`, { method: 'DELETE', headers: getAuthHeaders() });
       toast(`${username} removed.`);
       fetchUsers(adminUser.username);
     } catch { }
@@ -850,11 +850,11 @@ export default function AdminDashboard() {
                         ['Record Type', rec.recordType],
                         ['Issue Date', rec.issueDate],
                         ['Issuer', rec.issuerInstitution],
-                        ['Medical Costs', rec.medCosts ? `₹${Number(rec.medCosts).toLocaleString('en-IN')}` : '—'],
+                        ['Medical Costs', rec.medCosts ? `₹${Number(rec.medCosts).toLocaleString('en-IN')}` : '-'],
                       ].map(([label, val]) => (
                         <div key={label}>
                           <p style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>{label}</p>
-                          <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', margin: 0, marginTop: '0.15rem' }}>{val || '—'}</p>
+                          <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', margin: 0, marginTop: '0.15rem' }}>{val || '-'}</p>
                         </div>
                       ))}
                       {rec.diagnosis && (

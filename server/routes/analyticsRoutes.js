@@ -1,62 +1,18 @@
 /**
- * analyticsRoutes.js — MediLance Phase 3: Network Analytics
- *
- * GET /api/analytics/provider-risk
- *   Returns a ranked list of all issuers with their computed Trust Score,
- *   anomaly density, flag breakdown, and record volume.
- *   Protected: master admin credentials required (x-admin-user + x-admin-pass).
+ * analyticsRoutes.js - MediLance Network Analytics & Fraud Intelligence
  */
 
 const express = require('express');
 const router = express.Router();
 const { getDB } = require('../db');
 const { computeRiskScore } = require('../fraud');
+const { BILLING_BASELINES } = require('../config/baselines');
+const { verifyToken, requireAdmin, requireRole } = require('../utils/authMiddleware');
 
-// ── Master Admin Guard ────────────────────────────────────────────────────────
-async function requireMasterAdmin(req, res, next) {
-    try {
-        const user = req.headers['x-admin-user'];
-        if (!user) return res.status(403).json({ error: 'Master admin credentials required.' });
-        const db = getDB();
-        const admin = await db.collection('users').findOne({ username: user, isMasterAdmin: true });
-        if (!admin) return res.status(403).json({ error: 'Master admin credentials required.' });
-        next();
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-}
+router.use(verifyToken);
 
-// ── Verifier-or-Admin Guard ───────────────────────────────────────────────────
-// Allows: master admin (x-admin-user) OR any registered verifier/dual user (x-username)
-async function requireVerifier(req, res, next) {
-    try {
-        const db = getDB();
-        // Master admin path
-        const adminUser = req.headers['x-admin-user'];
-        if (adminUser) {
-            const admin = await db.collection('users').findOne({ username: adminUser, isMasterAdmin: true });
-            if (admin) return next();
-        }
-        // Registered verifier / dual path
-        const username = req.headers['x-username'];
-        if (username && username !== 'guest') {
-            const user = await db.collection('users').findOne({ username });
-            if (user && (user.role === 'verifier' || user.role === 'dual' || user.isMasterAdmin)) return next();
-        }
-        return res.status(403).json({ error: 'Verifier access required.' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-}
-
-// ── GET /api/analytics/provider-risk ─────────────────────────────────────────
-// For each issuer, score every record they have issued and compute:
-//   - avgScore         : mean Integrity Index across all their records
-//   - anomalyRate      : % of records with at least one critical/high flag
-//   - totalRecords     : total records issued
-//   - flagCounts       : breakdown of flag types across all records
-//   - trustGrade       : A / B / C / D based on avgScore
-router.get('/provider-risk', requireMasterAdmin, async (req, res) => {
+// GET /api/analytics/provider-risk (Master Admin Only)
+router.get('/provider-risk', requireAdmin, async (req, res) => {
     try {
         const db = getDB();
         const allRecords = await db.collection('medical_records').find({}).toArray();
@@ -87,13 +43,11 @@ router.get('/provider-risk', requireMasterAdmin, async (req, res) => {
                 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
                 : 100;
 
-            // Collect all flags across all records for this issuer
             const allFlags = scoreResults.flatMap(r => r.flags);
             const criticalCount = allFlags.filter(f => f.severity === 'critical').length;
             const highCount     = allFlags.filter(f => f.severity === 'high').length;
             const mediumCount   = allFlags.filter(f => f.severity === 'medium').length;
 
-            // Anomaly rate = % of records that have at least one non-low flag
             const anomalousRecords = scoreResults.filter(r =>
                 r.flags.some(f => f.severity === 'critical' || f.severity === 'high')
             ).length;
@@ -101,7 +55,6 @@ router.get('/provider-risk', requireMasterAdmin, async (req, res) => {
                 ? Math.round((anomalousRecords / data.records.length) * 100)
                 : 0;
 
-            // Flag type breakdown (top 5 flag types)
             const flagTypeCounts = {};
             for (const flag of allFlags) {
                 flagTypeCounts[flag.type] = (flagTypeCounts[flag.type] || 0) + 1;
@@ -127,9 +80,7 @@ router.get('/provider-risk', requireMasterAdmin, async (req, res) => {
             });
         }
 
-        // Sort: lowest trust score first (most suspicious at top)
         profiles.sort((a, b) => a.avgScore - b.avgScore);
-
         res.json({ providers: profiles, generatedAt: new Date().toISOString() });
     } catch (err) {
         console.error('[Analytics] provider-risk error:', err);
@@ -137,21 +88,13 @@ router.get('/provider-risk', requireMasterAdmin, async (req, res) => {
     }
 });
 
-// ── GET /api/analytics/ghost-procedures ──────────────────────────────────────
-// Scans all records grouped by patient (registerNumber) and flags clusters
-// that are statistically improbable:
-//   1. Duplicate record types on the same calendar day (same patient, same type)
-//   2. Multiple high-cost procedures in a single day (≥2 records, total > 50k INR)
-//   3. Logically incompatible same-day combos (e.g. Discharge + Lab Report)
-//   4. Same patient issued records by 3+ distinct issuers (ghost billing network)
-const BILLING_BASELINES = { 'Lab Report': 2500, 'Prescription': 1200, 'Discharge': 55000 };
-
-router.get('/ghost-procedures', requireVerifier, async (req, res) => {
+// GET /api/analytics/ghost-procedures (Verifiers, Dual, and Admin)
+router.get('/ghost-procedures', requireRole(['verifier', 'dual']), async (req, res) => {
     try {
         const db = getDB();
         const allRecords = await db.collection('medical_records').find({}).sort({}).limit(5000).toArray();
 
-        // Group by registerNumber (patient identity)
+        // Group by registerNumber
         const byPatient = {};
         for (const r of allRecords) {
             const key = r.registerNumber || '__unknown__';
@@ -162,11 +105,9 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
         const flaggedClusters = [];
 
         for (const [regNum, records] of Object.entries(byPatient)) {
-            if (records.length < 2) continue; // need at least 2 records to detect patterns
+            if (records.length < 2) continue;
 
             const flags = [];
-
-            // Build a date → records map
             const byDate = {};
             for (const r of records) {
                 const dateKey = (r.issueDate || '').split('T')[0];
@@ -195,24 +136,24 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
                 }
 
                 // Signal 2: Multiple high-cost procedures in one day
-                const dayTotal = dayRecords.reduce((sum, r) => sum + (parseFloat(r.medCosts) || BILLING_BASELINES[r.recordType] || 0), 0);
+                const dayTotal = dayRecords.reduce((sum, r) => sum + (parseFloat(r.medCosts) || BILLING_BASELINES[r.recordType]?.avg || 0), 0);
                 if (dayTotal >= 50000 && dayRecords.length >= 2) {
                     flags.push({
                         severity: 'high',
                         type: 'HIGH_COST_CLUSTER',
                         date,
-                        message: `Total billed cost on ${date}: ₹${dayTotal.toLocaleString('en-IN')} across ${dayRecords.length} procedures. Unusually high for a single day.`,
+                        message: `Total billed cost on ${date}: Rs. ${dayTotal.toLocaleString('en-IN')} across ${dayRecords.length} procedures. Unusually high for a single day.`,
                     });
                 }
 
-                // Signal 3: Logically incompatible same-day combos
+                // Signal 3: Incompatible same-day combinations
                 const types = dayRecords.map(r => r.recordType);
                 if (types.includes('Discharge') && types.includes('Lab Report')) {
                     flags.push({
                         severity: 'high',
                         type: 'INCOMPATIBLE_COMBO',
                         date,
-                        message: `Simultaneous "Discharge" and "Lab Report" on ${date}. Discharge typically concludes treatment; a same-day lab order is suspicious.`,
+                        message: `Simultaneous "Discharge" and "Lab Report" on ${date}. Discharge concludes treatment; a same-day lab order is suspicious.`,
                     });
                 }
                 if (types.includes('Discharge') && types.includes('Prescription')) {
@@ -225,7 +166,7 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
                 }
             }
 
-            // Signal 4: Ghost billing network. Same patient, 3+ distinct issuers
+            // Signal 4: Ghost billing network (3+ distinct issuers)
             const issuers = [...new Set(records.map(r => r.issuerUsername).filter(Boolean))];
             if (issuers.length >= 3) {
                 flags.push({
@@ -259,7 +200,6 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
             }
         }
 
-        // Sort: critical first
         const severityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2 };
         flaggedClusters.sort((a, b) => severityOrder[a.riskLevel] - severityOrder[b.riskLevel]);
 
@@ -270,21 +210,8 @@ router.get('/ghost-procedures', requireVerifier, async (req, res) => {
     }
 });
 
-// ── GET /api/analytics/express-approval ──────────────────────────────────────
-// Phase 4.1 — Fast-Track & Payout: Express Approval
-//
-// Returns all records that satisfy BOTH conditions:
-//   1. Integrity Score ≥ 95  (no critical/high fraud signals)
-//   2. Billing within the expected percentile (≤ 1.5× the procedure baseline)
-//
-// Each approved record gets:
-//   - integrityScore  : 0-100 computed by the fraud engine
-//   - approvalTier    : 'PLATINUM' (100) | 'GOLD' (97-99) | 'FAST' (95-96)
-//   - fastTrackReason : human-readable explanation for the approval
-//   - billingRatio    : how the claim compares to the procedure average
-const BILLING_BASELINES_4 = { 'Lab Report': 2500, 'Prescription': 1200, 'Discharge': 55000 };
-
-router.get('/express-approval', requireVerifier, async (req, res) => {
+// GET /api/analytics/express-approval (Verifiers, Dual, and Admin)
+router.get('/express-approval', requireRole(['verifier', 'dual']), async (req, res) => {
     try {
         const db = getDB();
         const allRecords = await db.collection('medical_records').find({}).sort({ createdAt: -1 }).limit(5000).toArray();
@@ -292,37 +219,33 @@ router.get('/express-approval', requireVerifier, async (req, res) => {
         const approved = [];
 
         for (const record of allRecords) {
-            // Skip already actioned records (if Verifier Dashboard later adds status field)
             if (record.approvalStatus && record.approvalStatus !== 'pending') continue;
 
             const { score, flags } = await computeRiskScore(record, db);
-
-            // Condition 1: Integrity Score must be 95+
             if (score < 95) continue;
 
-            // Condition 2: Billing within-percentile (no critical billing anomaly)
             const medCosts = parseFloat(record.medCosts);
-            const baseline = BILLING_BASELINES_4[record.recordType];
+            const baseline = BILLING_BASELINES[record.recordType]?.avg;
             let billingRatio = null;
             if (baseline && !isNaN(medCosts) && medCosts > 0) {
                 billingRatio = parseFloat((medCosts / baseline).toFixed(2));
-                if (billingRatio > 1.5) continue; // above expected range, not fast-trackable
+                if (billingRatio > 1.5) continue;
             }
 
-            // Approval tier
             const approvalTier = score === 100 ? 'PLATINUM' : score >= 97 ? 'GOLD' : 'FAST';
-
-            // Human-readable fast-track reason
             const reasons = [];
-            if (flags.length === 0) reasons.push('No fraud signals detected.');
-            else reasons.push(`Only low-severity signal${flags.length > 1 ? 's' : ''} detected. No critical or high flags.`);
-            if (billingRatio !== null) {
-                reasons.push(`Billing of \u20b9${medCosts.toLocaleString('en-IN')} is ${billingRatio}x the typical ${record.recordType} average. Within expected range.`);
+            if (flags.length === 0) {
+                reasons.push('No fraud signals detected. Perfect cryptographic provenance.');
             } else {
-                reasons.push('No billing data to cross-check. Record type qualifies by integrity alone.');
+                reasons.push(`Only low-severity signal${flags.length > 1 ? 's' : ''} detected. No critical flags.`);
+            }
+            if (billingRatio !== null) {
+                reasons.push(`Billing of Rs. ${medCosts.toLocaleString('en-IN')} is ${billingRatio}x the typical baseline. Within expected range.`);
+            } else {
+                reasons.push('No anomalous billing found. Record qualifies by integrity score.');
             }
             if (record.issuerProfile?.institution) {
-                reasons.push(`Issued by a registered provider: ${record.issuerProfile.institution}.`);
+                reasons.push(`Issued by registered institution: ${record.issuerProfile.institution}.`);
             }
 
             approved.push({
@@ -345,7 +268,6 @@ router.get('/express-approval', requireVerifier, async (req, res) => {
             });
         }
 
-        // Sort: PLATINUM first, then GOLD, then FAST; within tier by score desc
         const tierOrder = { PLATINUM: 0, GOLD: 1, FAST: 2 };
         approved.sort((a, b) =>
             tierOrder[a.approvalTier] - tierOrder[b.approvalTier] || b.integrityScore - a.integrityScore

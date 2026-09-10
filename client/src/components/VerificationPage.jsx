@@ -121,7 +121,7 @@ function RecordGrid({ rec, history }) {
 }
 
 export default function VerificationPage() {
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
   const [mode, setMode] = useState('basic');
   const [hashInput, setHashInput] = useState('');
   const [basicFile, setBasicFile] = useState(null);
@@ -229,7 +229,7 @@ export default function VerificationPage() {
     try {
       const res = await fetch(`${API_BASE}/api/verify-record`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-username': user?.username || 'guest' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ dataHash: hashInput }),
       });
       const data = await res.json();

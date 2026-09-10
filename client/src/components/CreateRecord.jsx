@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import API_BASE from '../config';
 
 export default function CreateRecord() {
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
   const [mode, setMode] = useState('basic');
   const [formData, setFormData] = useState({
     patientName: '', gender: '', age: '', dob: '',

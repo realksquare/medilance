@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_BASE from '../config';
 
@@ -12,7 +13,7 @@ export default function Login() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isError = status.includes('found') || status.includes('Cannot') || status.includes('password') || status.includes('Incorrect');
+  const isError = status.includes('found') || status.includes('Cannot') || status.includes('password') || status.includes('Incorrect') || status.includes('Invalid') || status.includes('required');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,23 +22,26 @@ export default function Login() {
     setStatus('');
 
     try {
-      const headers = { 'x-password': form.password || '' };
-      const res = await fetch(`${API}/users/${form.username.trim()}`, { headers });
-      if (res.status === 401) {
-        setStatus('Incorrect password.');
-        setLoading(false);
-        return;
-      }
-      if (!res.ok) {
-        setStatus('No account found with that username. Contact your administrator to get access.');
-        setLoading(false);
-        return;
-      }
+      const res = await fetch(`${API}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: form.username.trim(),
+          password: form.password || '',
+        }),
+      });
+
       const data = await res.json();
-      login(data.user, form.password);
+      if (!res.ok) {
+        setStatus(data.error || 'Invalid username or password.');
+        setLoading(false);
+        return;
+      }
+
+      login(data.user, data.token);
       navigate('/profile');
     } catch {
-      setStatus('Cannot reach server. Please try again later.');
+      setStatus('Cannot reach server. Please ensure server is running.');
     } finally {
       setLoading(false);
     }
@@ -46,7 +50,6 @@ export default function Login() {
   return (
     <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: '440px' }}>
-        {/* Header */}
         <div style={{ marginBottom: '2.5rem' }}>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', color: 'var(--primary)', textTransform: 'uppercase' }}>
             MediLance Protocol
@@ -55,11 +58,10 @@ export default function Login() {
             Welcome back.
           </h1>
           <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-            Enter your credentials to access your identity.
+            Enter your credentials to access your verified identity.
           </p>
         </div>
 
-        {/* Card */}
         <div className="card" style={{ padding: '2rem' }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
@@ -99,12 +101,11 @@ export default function Login() {
               </div>
             )}
 
-            <button type="submit" className="btn" disabled={loading} style={{ width: '100%', marginTop: '0.25rem' }}>
-              {loading ? 'Checking...' : 'Access Identity →'}
+            <button type="submit" className="btn" disabled={loading} style={{ width: '100%', marginTop: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              {loading ? 'Authenticating...' : <><span>Access Identity</span><ArrowRight size={16} /></>}
             </button>
           </form>
         </div>
-
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ function DetailRow({ label, value }) {
 }
 
 export default function VerifierDashboard() {
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
 
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -76,7 +76,7 @@ export default function VerifierDashboard() {
     setGhostLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/analytics/ghost-procedures`, {
-        headers: { 'x-username': uname },
+        headers: getAuthHeaders(),
       });
       const data = await res.json();
       setGhostData(data);
@@ -89,7 +89,7 @@ export default function VerifierDashboard() {
     setExpressLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/analytics/express-approval`, {
-        headers: { 'x-username': uname },
+        headers: getAuthHeaders(),
       });
       const data = await res.json();
       setExpressData(data);
@@ -119,7 +119,7 @@ export default function VerifierDashboard() {
     setQueueError('');
     try {
       const res = await fetch(`${API}/queue`, {
-        headers: { 'x-username': user.username },
+        headers: getAuthHeaders(),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
@@ -158,7 +158,7 @@ export default function VerifierDashboard() {
     try {
       const res = await fetch(`${API}/decision`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-username': user.username },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ recordId: String(selected._id), action, reason: reason.trim() }),
       });
       const data = await res.json();

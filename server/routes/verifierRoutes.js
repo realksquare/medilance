@@ -3,26 +3,14 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 const { getDB } = require('../db');
 const { computeRiskScore } = require('../fraud');
+const { verifyToken, requireRole } = require('../utils/authMiddleware');
 
-// Guard: verifier or dual role only
-async function requireVerifier(req, res, next) {
-    try {
-        const username = req.headers['x-username'];
-        if (!username || username === 'guest') return res.status(403).json({ error: 'Verifier login required.' });
-        const db = getDB();
-        const user = await db.collection('users').findOne({ username });
-        if (!user) return res.status(403).json({ error: 'User not found.' });
-        if (!['verifier', 'dual'].includes(user.role)) return res.status(403).json({ error: 'Verifier role required.' });
-        req.verifierUser = user;
-        next();
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-}
+router.use(verifyToken);
+router.use(requireRole(['verifier', 'dual']));
 
 // GET /api/verifier/queue
-// Returns records with integrity score < 90 and status pending, sorted by score ascending (riskiest first)
-router.get('/queue', requireVerifier, async (req, res) => {
+// Returns records with integrity score < 90 and pending status, sorted by score ascending
+router.get('/queue', async (req, res) => {
     try {
         const db = getDB();
         const allRecords = await db.collection('medical_records')
@@ -67,22 +55,26 @@ router.get('/queue', requireVerifier, async (req, res) => {
 });
 
 // PATCH /api/verifier/decision
-// Body: { recordId, action: 'accepted'|'flagged'|'rejected', reason }
-router.patch('/decision', requireVerifier, async (req, res) => {
+router.patch('/decision', async (req, res) => {
     try {
         const { recordId, action, reason } = req.body;
-        if (!recordId || !action) return res.status(400).json({ error: 'recordId and action are required.' });
-        if (!['accepted', 'flagged', 'rejected'].includes(action)) return res.status(400).json({ error: 'Invalid action.' });
+        if (!recordId || !action) {
+            return res.status(400).json({ error: 'recordId and action are required.' });
+        }
+        if (!['accepted', 'flagged', 'rejected'].includes(action)) {
+            return res.status(400).json({ error: 'Invalid action.' });
+        }
 
         const db = getDB();
         let filter;
         try { filter = { _id: new ObjectId(recordId) }; } catch { filter = { _id: recordId }; }
 
+        const verifiedBy = req.user.username;
         const result = await db.collection('medical_records').updateOne(filter, {
             $set: {
                 approvalStatus: action,
                 verifierNote: reason || '',
-                verifiedBy: req.verifierUser.username,
+                verifiedBy,
                 verifiedAt: new Date().toISOString(),
             }
         });
@@ -90,14 +82,14 @@ router.patch('/decision', requireVerifier, async (req, res) => {
         if (result.matchedCount === 0) return res.status(404).json({ error: 'Record not found.' });
 
         await db.collection('actions').insertOne({
-            username: req.verifierUser.username,
+            username: verifiedBy,
             actionType: 'verifier_decision',
             status: 'success',
             details: { recordId, action, reason: reason || '' },
             timestamp: new Date(),
         });
 
-        res.json({ message: `Record ${action}.` });
+        res.json({ message: `Record ${action} successfully.` });
     } catch (err) {
         console.error('[Verifier] decision error:', err);
         res.status(500).json({ error: 'Failed to record decision.' });
